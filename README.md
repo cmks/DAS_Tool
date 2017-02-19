@@ -1,3 +1,4 @@
 # DAS_Tool
 
-# Code will be available in seven days due to delays during open source licensing. Many apologies!
+# Update (02/19/17): More delays in the open source licensing process. LBL lawyers are working hard on it.
+# Code will be available soon. Many apologies!
