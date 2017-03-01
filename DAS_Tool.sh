@@ -1,0 +1,336 @@
+#!/bin/bash
+
+# DAS Tool for genome-resolved metagenomics
+# by Christian MK Sieber (csieber@lbl.gov)
+#
+#
+# DAS Tool Copyright (c) 2017, The Regents of the University of California, through Lawrence
+# Berkeley National Laboratory (subject to receipt of any required approvals from the U.S.
+# Dept. of Energy).  All rights reserved.
+#
+# If you have questions about your rights to use or distribute this software, please contact
+# Berkeley Lab's Innovation and Partnerships department at IPO@lbl.gov referring to
+# "DAS Tool (2017-024)".
+#
+# NOTICE.  This software was developed under funding from the U.S. Department of Energy.  As
+# such, the U.S. Government has been granted for itself and others acting on its behalf a
+# paid-up, nonexclusive, irrevocable, worldwide license in the Software to reproduce,
+# prepare derivative works, and perform publicly and display publicly. The U.S. Government
+# is granted for itself and others acting on its behalf a paid-up, nonexclusive,
+# irrevocable, worldwide license in the Software to reproduce, prepare derivative works,
+# distribute copies to the public, perform publicly and display publicly, and to permit
+# others to do so.
+#
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+thisdir=$(pwd)
+
+function display_version() {
+    echo
+    echo "DAS Tool version 1.0"
+    echo
+    exit 1
+}
+
+
+function display_help() {
+    echo " "
+    echo "DAS Tool version 1.0"
+    echo " "
+    echo "Usage: DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
+    echo "                   -l methodA,...,methodN -c contigs.fa -o myOutput"
+    echo
+    echo "   -i, --bins                 Comma separated list of tab separated scaffolds to bin tables."
+    echo "   -c, --contigs              Contigs in fasta format."
+    echo "   -o, --outputbasename       Basename of output files."
+    echo "   -l, --labels               Comma separated list of binning prediction names. (optional)"
+    echo "   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch]."
+    echo "                              (default: usearch)"
+    echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
+    echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
+    echo "   --write_bins               Export bins as fasta files  [0/1]. (default: 0)"
+    echo "   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo)."
+    echo "                              Gene prediction step will be skipped if given. (optional)"
+    echo "   --score_threshold          Score threshold until selection algorithm will keep selecting bins [0..1]."
+    echo "                              (default: 0.1)"
+    echo "   -t, --threads              Number of threads to use. (default: 1)"
+    echo "   -v, --version              Print version number and exit."
+    echo "   -h, --help                 Show this message."
+    echo
+    echo "Example 1: Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix DASToolRun1: "
+    echo  "   ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun1"
+    echo
+    echo "Example 2:  Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step. Set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix DASToolRun2: "
+    echo  "   ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun2 --threads 2 --score_threshold 0.6 --proteins sample_output/DASToolRun1_proteins.faa"
+    echo " "
+    echo " "
+    echo "Please cite: https://doi.org/10.1101/107789"
+    echo " "
+    echo " "
+    exit 1
+}
+
+[ $# -eq 0 ] && { display_help ; exit 1; }
+
+binlabels="NULL"
+mappedreads="NULL"
+coverage_table="NULL"
+debug="FALSE"
+use_gc=1
+use_N50=1
+executed_prodigal=0
+score_threshold=0.1
+threads=1
+write_bin_evals=1
+create_plots=1
+write_bins=0
+search_engine="usearch"
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -i | --bins )           shift
+                                scaffoldstobins=$1
+                                ;;
+        -l | --labels )         shift
+                                binlabels=$1
+                                ;;
+        -c | --contigs )        shift
+                                contigs=$1
+                                ;;
+        -o | --outputbasename ) shift
+                                outputbasename=$1
+                                ;;
+        --write_bin_evals )     shift
+                                write_bin_evals=$1
+                                ;;
+        --create_plots )        shift
+                                create_plots=$1
+                                ;;
+        --write_bins )          shift
+                                write_bins=$1
+                                ;;
+        --proteins )            shift
+                                proteins=$1
+                                ;;
+        --score_threshold )     shift
+                                score_threshold=$1
+                                ;;
+        --search_engine )       shift
+                                search_engine=$1
+                                ;;
+        -t | --threads )        shift
+                                threads=$1
+                                ;;
+        -v | --version )        shift
+                                display_version
+                                exit
+                                ;;
+        --debug )               shift
+                                debug="TRUE"
+                                ;;
+        -h | --help )           display_help
+                                exit
+                                ;;
+        * )                     display_help
+                                exit 1
+    esac
+    shift
+done
+
+
+if [ "$write_bins" == "0" ] || [ "$write_bins" == "false" ] || [ "$write_bins" == "False" ] || [ "$write_bins" == "f" ]; then
+write_bins="FALSE"
+else
+write_bins="TRUE"
+fi
+if [ "$write_bin_evals" == "0" ] || [ "$write_bin_evals" == "false" ] || [ "$write_bin_evals" == "False" ] || [ "$write_bin_evals" == "f" ]; then
+write_bin_evals="FALSE"
+else
+write_bin_evals="TRUE"
+fi
+if [ "$create_plots" == "0" ] || [ "$create_plots" == "false" ] || [ "$create_plots" == "False" ] || [ "$create_plots" == "f" ]; then
+create_plots="FALSE"
+else
+create_plots="TRUE"
+fi
+
+
+#
+# 0.1 Load dependencies
+#
+PATH="$PATH:$DASTOOL_PULLSEQ"
+PATH="$PATH:$DASTOOL_PRODIGAL"
+PATH="$PATH:$DASTOOL_DIAMOND"
+PATH="$PATH:$DASTOOL_BLAST"
+PATH="$PATH:$DASTOOL_USEARCH"
+
+
+#check search engine
+if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
+command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Aborting."; exit 1; }
+search_engine="diamond"
+fi
+if [ "$search_engine" == "blast" ] ||  [ "$search_engine" == "BLAST" ] || [ "$search_engine" == "Blast" ] || [ "$search_engine" == "b" ] || [ "$search_engine" == "B" ] || [ "$search_engine" == "blastp" ]; then
+command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb.  Aborting."; exit 1; }
+command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Aborting."; exit 1; }
+search_engine="blast"
+fi
+if [ "$search_engine" == "usearch" ] || [ "$search_engine" == "USEARCH" ] || [ "$search_engine" == "UBLAST" ] || [ "$search_engine" == "Usearch" ] || [ "$search_engine" == "u" ] || [ "$search_engine" == "U" ] || [ "$search_engine" == "ublast" ] || [ "$search_engine" == "Ublast" ]; then
+command -v usearch >/dev/null 2>&1 || { echo >&2 "Can't find usearch. Aborting."; exit 1; }
+search_engine="usearch"
+fi
+
+#
+# 0.2 Check existence of files
+#
+if [ ! -f $contigs ]
+then
+  echo contig file not found: $contigs
+  echo stopping
+  exit 1
+fi
+
+if [ ! -z "$proteins" ] &&  [ ! -f $proteins ]
+then
+  echo proteins file not found: $proteins
+  echo stopping
+  exit 1
+fi
+
+if [ "$coverage_table" != "NULL" ] && [ ! -f $coverage_table ]
+then
+  echo coverage table not found: $coverage_table
+  echo stopping
+  exit 1
+fi
+
+if [ "$mappedreads" != "NULL"  ] && [ ! -f $mappedreads ]
+then
+  echo bam file not found: $mappedreads
+  echo stopping
+  exit 1
+fi
+
+for i in $(echo $scaffoldstobins | tr "," " ")
+do
+if [ ! -f $i ];
+then
+  echo "scaffolds2bin file not found: $i "
+  exit 1
+fi
+done
+
+
+
+#
+# 1. Run Prodigal
+#
+if [ -z "$proteins" ]
+then
+
+    #check if dependencies for gene prediction are installed
+    command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Aborting."; exit 1; }
+    command -v prodigal >/dev/null 2>&1 || { echo >&2 "Can't find prodigal. Aborting."; exit 1; }
+
+    proteins=$outputbasename\_proteins.faa
+
+    echo "predicting genes using prodigal"
+    grep ">" $contigs | perl -pe 's/>//g;' | shuf > dastoolthreadstmpheader
+    dastoolthreadstmpheader=dastoolthreadstmpheader
+    total_lines=$(wc -l <${dastoolthreadstmpheader})
+    ((lines_per_file = (total_lines + threads - 1) / threads))
+    split --numeric-suffixes --lines=${lines_per_file} ${dastoolthreadstmpheader} dastoolthreadstmp.
+    rm dastoolthreadstmpheader
+
+    for i in dastoolthreadstmp.*
+    do
+    pullseq --input $contigs --names $i > $i\_contigs.fa
+    prodigal -a $i\_partialprot.faa -i $i\_contigs.fa -p meta -m -q > /dev/null 2>&1 &
+    done
+    wait
+    cat *_partialprot.faa > $proteins
+    rm dastoolthreadstmp.*
+    executed_prodigal=1
+elif [ ! -f $proteins ]
+then
+  echo protein file not found: $proteins
+  echo stopping
+  exit 1
+fi
+
+
+
+#
+# 2. Predict Single Copy Genes
+#
+bscg=$proteins\.bacteria.scg
+ascg=$proteins\.archaea.scg
+if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $executed_prodigal == 1 ]; then
+echo "identifying single copy genes using $search_engine"
+#predict bacterial SCGs
+ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $DIR\/db/bac.all.faa $DIR\/db/bac.scg.faa $DIR\/db/bac.scg.lookup $threads > /dev/null 2>&1
+mv $proteins\.scg $bscg
+#predict archaeal SCGs
+ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $DIR\/db/arc.all.faa $DIR\/db/arc.scg.faa $DIR\/db/arc.scg.lookup $threads > /dev/null 2>&1
+mv $proteins\.scg $ascg
+rm $proteins\.findSCG.b6 $proteins\.scg.candidates.faa $proteins\.all.b6
+else
+  echo found predicted single copy genes:
+  echo "  " $bscg
+  echo "  " $ascg
+  echo skipping single copy gene identification
+fi
+
+
+
+#
+# 3. Calculate Contig Length
+#
+length_table=$outputbasename\.seqlength
+awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $contigs | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n\([^>]\)/?\1/g' | tr '?' '\t' | sed 's/>//g' > $length_table
+
+
+
+#
+# 4. Run DAS Tool
+#
+cd $DIR
+Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $create_plots $debug
+cd $thisdir
+
+
+
+#
+# 5. Extract Bins
+#
+if [ "$write_bins" == "TRUE" ]; then
+scaf2bin=$outputbasename\_DASTool_scaffolds2bin.txt
+if test -f $scaf2bin; then
+
+bin_folder=$outputbasename\_DASTool_bins
+if [ -d "$bin_folder" ]; then
+  rm -r $bin_folder
+fi
+mkdir $bin_folder
+
+echo extracting bins to $bin_folder
+while read scaffold bin
+do
+echo $scaffold >> $bin_folder\/$bin\.ctgtmp
+done < $scaf2bin
+
+for i in $bin_folder\/*.ctgtmp
+do
+bin_id=$(echo $i | perl -pe 's/\.ctgtmp//g')
+pullseq -i $contigs -n $i > $bin_id\.contigs.fa
+rm $i
+done
+fi
+fi
