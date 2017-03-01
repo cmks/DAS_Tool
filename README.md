@@ -89,4 +89,4 @@ $ ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
                 --score_threshold 0.6
 ```
 
-For detaile instructions please read the documentation.
+For detailed instructions please read the documentation.
