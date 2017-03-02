@@ -26,4 +26,4 @@ R CMD INSTALL ./package/DASTool_1.0.0.tar.gz
 # Call DAS Tool:
 ./DAS_Tool.sh -h
 ``` 
-For detaile instructions please read the documentation.
+For detailed instructions please read the documentation.

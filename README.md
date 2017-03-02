@@ -1,11 +1,11 @@
-#DAS Tool version 1.0 README
+#DAS Tool version 1.0
 
 
 ##1. Usage
 
 ``` 
-Usage: DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
-                   -l methodA,...,methodN -c contigs.fa -o myOutput
+DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
+            -l methodA,...,methodN -c contigs.fa -o myOutput
 
    -i, --bins                 Comma separated list of tab separated scaffolds to bin tables.
    -c, --contigs              Contigs in fasta format.
