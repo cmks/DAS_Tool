@@ -1,9 +1,9 @@
-#DAS Tool version 1.0
+# DAS Tool version 1.0
 
 Database files are available here: http://banfieldlab.berkeley.edu/~csieber/db.zip
 See installation instructions for more details.
 
-##1. Usage
+## 1. Usage
 
 ``` 
 DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
@@ -29,7 +29,7 @@ DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
 ``` 
 
 
-###1.1 Input file format
+### 1.1 Input file format
 - Bins [\--bins, -i]: Tab separated files of scaffold-IDs and bin-IDs.
 Scaffold to bin file example:
 ``` 
@@ -54,7 +54,7 @@ MPRKNKKLPRHLLVIRTSAMGDVAMLPHALRALKEAYPEVKVTVATKSLFHPFFEG...
 MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 ```
 
-###1.2 Output files
+### 1.2 Output files
 - Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
 - Scaffold to bin file of output bins (DASTool_scaffolds2bin.txt).
 - Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
@@ -63,7 +63,7 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 
 
-###1.3 Examples: Running DAS Tool on sample data.
+### 1.3 Examples: Running DAS Tool on sample data.
 
 **Example 1:**  Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix *DASToolRun1*:
 ``` 
