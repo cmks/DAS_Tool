@@ -23,6 +23,10 @@ cd ./DAS_Tool.v1.0
 # Install R-packages:
 R CMD INSTALL ./package/DASTool_1.0.0.tar.gz
 
+# Download SCG database:
+wget http://banfieldlab.berkeley.edu/~csieber/db.zip
+unzip db.zip
+
 # Call DAS Tool:
 ./DAS_Tool.sh -h
 ``` 

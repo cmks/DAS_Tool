@@ -1,5 +1,7 @@
 #DAS Tool version 1.0
 
+Database files are available here: http://banfieldlab.berkeley.edu/~csieber/db.zip
+See installation instructions for more details.
 
 ##1. Usage
 
