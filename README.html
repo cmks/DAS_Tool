@@ -121,7 +121,8 @@ $(document).ready(function () {
 
 <div id="das-tool-version-1.0" class="section level1">
 <h1>DAS Tool version 1.0</h1>
-<p>Database files are available here: <a href="http://banfieldlab.berkeley.edu/~csieber/db.zip" class="uri">http://banfieldlab.berkeley.edu/~csieber/db.zip</a> See installation instructions for more details.</p>
+<p>Database files are available here: <a href="http://banfieldlab.berkeley.edu/~csieber/db.zip" class="uri">http://banfieldlab.berkeley.edu/~csieber/db.zip</a></p>
+<p>See installation instructions for more details.</p>
 <div id="usage" class="section level2">
 <h2>1. Usage</h2>
 <pre><code>DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
@@ -196,8 +197,43 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...</code></pre></li>
                 --write_bin_evals 0 
                 --threads 2 
                 --score_threshold 0.6</code></pre>
-<p>For detailed instructions please read the documentation.</p>
 </div>
+</div>
+</div>
+<div id="installation" class="section level1">
+<h1>2. Installation</h1>
+<div id="dependencies" class="section level2">
+<h2>2.1 Dependencies</h2>
+<ul>
+<li>R (&gt;= 3.2.3): <a href="https://www.r-project.org" class="uri">https://www.r-project.org</a></li>
+<li>R-packages: data.table (&gt;= 1.9.6), doMC (&gt;= 1.3.4), ggplot2 (&gt;= 2.1.0)</li>
+<li>ruby (&gt;= v2.3.1): <a href="https://www.ruby-lang.org" class="uri">https://www.ruby-lang.org</a></li>
+<li>Pullseq (&gt;= 1.0.2): <a href="https://github.com/bcthomas/pullseq" class="uri">https://github.com/bcthomas/pullseq</a></li>
+<li>Prodigal (&gt;= 2.6.3): <a href="https://github.com/hyattpd/Prodigal" class="uri">https://github.com/hyattpd/Prodigal</a></li>
+<li>One of the following search engines:
+<ul>
+<li>USEARCH (&gt;= 8.1): <a href="http://www.drive5.com/usearch/download.html" class="uri">http://www.drive5.com/usearch/download.html</a></li>
+<li>DIAMOND (&gt;= 0.8.24): <a href="https://github.com/bbuchfink/diamond" class="uri">https://github.com/bbuchfink/diamond</a></li>
+<li>BLAST+ (&gt;= 2.5.0): <a href="https://blast.ncbi.nlm.nih.gov/Blast.cgi" class="uri">https://blast.ncbi.nlm.nih.gov/Blast.cgi</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="installation-1" class="section level2">
+<h2>2.2 Installation</h2>
+<pre><code># Download and extract DASTool.zip archive:
+unzip DAS_Tool.v1.0.zip
+cd ./DAS_Tool.v1.0
+
+# Install R-packages:
+R CMD INSTALL ./package/DASTool_1.0.0.tar.gz
+
+# Download latest SCG database:
+wget http://banfieldlab.berkeley.edu/~csieber/db.zip
+unzip db.zip
+
+# Run DAS Tool:
+./DAS_Tool.sh -h</code></pre>
+<p>For detailed instructions please read the documentation.</p>
 </div>
 </div>
 
