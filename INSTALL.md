@@ -1,6 +1,6 @@
-#Installation instructions for DAS Tool version 1.0
+# Installation instructions for DAS Tool version 1.0
 
-#1. Dependencies
+# 1. Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
 - R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
@@ -13,7 +13,7 @@
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
-#2. Installation
+# 2. Installation
 
 ``` 
 # Download and extract DASTool.zip archive:
