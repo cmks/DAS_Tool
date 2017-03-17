@@ -171,19 +171,21 @@ PATH="$PATH:$DASTOOL_DIAMOND"
 PATH="$PATH:$DASTOOL_BLAST"
 PATH="$PATH:$DASTOOL_USEARCH"
 
+#Check for R installation
+command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please make sure R (>= 3.2.3) is installed on your system. Aborting."; exit 1; }
 
 #check search engine
 if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
-command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Aborting."; exit 1; }
+command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
 search_engine="diamond"
 fi
 if [ "$search_engine" == "blast" ] ||  [ "$search_engine" == "BLAST" ] || [ "$search_engine" == "Blast" ] || [ "$search_engine" == "b" ] || [ "$search_engine" == "B" ] || [ "$search_engine" == "blastp" ]; then
-command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb.  Aborting."; exit 1; }
-command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Aborting."; exit 1; }
+command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb. Please make sure BLAST is installed on your system.  Aborting."; exit 1; }
+command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Please make sure BLAST is installed on your system. Aborting."; exit 1; }
 search_engine="blast"
 fi
 if [ "$search_engine" == "usearch" ] || [ "$search_engine" == "USEARCH" ] || [ "$search_engine" == "UBLAST" ] || [ "$search_engine" == "Usearch" ] || [ "$search_engine" == "u" ] || [ "$search_engine" == "U" ] || [ "$search_engine" == "ublast" ] || [ "$search_engine" == "Ublast" ]; then
-command -v usearch >/dev/null 2>&1 || { echo >&2 "Can't find usearch. Aborting."; exit 1; }
+command -v usearch >/dev/null 2>&1 || { echo >&2 "Can't find usearch. Please make sure USEARCH is installed on your system. Aborting."; exit 1; }
 search_engine="usearch"
 fi
 
@@ -236,8 +238,8 @@ if [ -z "$proteins" ]
 then
 
     #check if dependencies for gene prediction are installed
-    command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Aborting."; exit 1; }
-    command -v prodigal >/dev/null 2>&1 || { echo >&2 "Can't find prodigal. Aborting."; exit 1; }
+    command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Please make sure pullseq is installed on your system. Aborting."; exit 1; }
+    command -v prodigal >/dev/null 2>&1 || { echo >&2 "Can't find prodigal. Please make sure prodigal is installed on your system. Aborting."; exit 1; }
 
     proteins=$outputbasename\_proteins.faa
 
@@ -273,6 +275,7 @@ fi
 bscg=$proteins\.bacteria.scg
 ascg=$proteins\.archaea.scg
 if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $executed_prodigal == 1 ]; then
+command -v ruby >/dev/null 2>&1 || { echo >&2 "Can't find ruby. Please make sure ruby is installed on your system. Aborting."; exit 1; }
 echo "identifying single copy genes using $search_engine"
 #predict bacterial SCGs
 ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $DIR\/db/bac.all.faa $DIR\/db/bac.scg.faa $DIR\/db/bac.scg.lookup $threads > /dev/null 2>&1
