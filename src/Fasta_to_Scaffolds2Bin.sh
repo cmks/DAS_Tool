@@ -40,7 +40,6 @@ done
 for i in $folder\/*.$extension
 do
 binname=$(echo $(basename $i) | sed "s/\\.$extension//g")
-echo $binname
 grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g" 
 done
 
