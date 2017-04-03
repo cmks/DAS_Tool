@@ -229,6 +229,9 @@ then
 fi
 done
 
+# Existence and permissions of output directory
+if [ ! -d $(dirname $outputbasename) ]; then echo "Directory for output files does not exist: $(dirname $outputbasename). Aborting"; exit 1; fi
+if [ ! -w $(dirname $outputbasename) ] ; then echo "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting"; exit 1; fi
 
 
 #
@@ -244,21 +247,21 @@ then
     proteins=$outputbasename\_proteins.faa
 
     echo "predicting genes using prodigal"
-    grep ">" $contigs | perl -pe 's/>//g;' | shuf > dastoolthreadstmpheader
-    dastoolthreadstmpheader=dastoolthreadstmpheader
+    grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
+    dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
     total_lines=$(wc -l <${dastoolthreadstmpheader})
     ((lines_per_file = (total_lines + threads - 1) / threads))
-    split --numeric-suffixes --lines=${lines_per_file} ${dastoolthreadstmpheader} dastoolthreadstmp.
-    rm dastoolthreadstmpheader
+    split --numeric-suffixes --lines=${lines_per_file} ${dastoolthreadstmpheader} $outputbasename\_dastoolthreadstmp.
+    rm $outputbasename\_dastoolthreadstmpheader
 
-    for i in dastoolthreadstmp.*
+    for i in $outputbasename\_dastoolthreadstmp.*
     do
     pullseq --input $contigs --names $i > $i\_contigs.fa
     prodigal -a $i\_partialprot.faa -i $i\_contigs.fa -p meta -m -q > /dev/null 2>&1 &
     done
     wait
-    cat *_partialprot.faa > $proteins
-    rm dastoolthreadstmp.*
+    cat $outputbasename\_*_partialprot.faa > $proteins
+    rm $outputbasename\_dastoolthreadstmp.*
     executed_prodigal=1
 elif [ ! -f $proteins ]
 then
