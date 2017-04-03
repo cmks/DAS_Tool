@@ -4,6 +4,8 @@ Database files are available here: http://banfieldlab.berkeley.edu/~csieber/db.z
 
 See installation instructions for more details.
 
+Please cite: http://biorxiv.org/content/early/2017/02/11/107789
+
 ## 1. Usage
 
 ``` 
