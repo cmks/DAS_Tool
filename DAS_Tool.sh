@@ -173,6 +173,7 @@ PATH="$PATH:$DASTOOL_USEARCH"
 
 #Check for R installation
 command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please make sure R (>= 3.2.3) is installed on your system. Aborting."; exit 1; }
+#command -v perl >/dev/null 2>&1 || { echo >&2 "Can't find perl. Please make sure Perl is installed on your system. Aborting."; exit 1; }
 
 #check search engine
 if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
@@ -192,30 +193,16 @@ fi
 #
 # 0.2 Check existence of files
 #
-if [ ! -f $contigs ]
+if [ ! -f "$contigs" ]
 then
   echo contig file not found: $contigs
   echo stopping
   exit 1
 fi
 
-if [ ! -z "$proteins" ] &&  [ ! -f $proteins ]
+if [ ! -z "$proteins" ] &&  [ ! -f "$proteins" ]
 then
   echo proteins file not found: $proteins
-  echo stopping
-  exit 1
-fi
-
-if [ "$coverage_table" != "NULL" ] && [ ! -f $coverage_table ]
-then
-  echo coverage table not found: $coverage_table
-  echo stopping
-  exit 1
-fi
-
-if [ "$mappedreads" != "NULL"  ] && [ ! -f $mappedreads ]
-then
-  echo bam file not found: $mappedreads
   echo stopping
   exit 1
 fi
@@ -247,7 +234,8 @@ then
     proteins=$outputbasename\_proteins.faa
 
     echo "predicting genes using prodigal"
-    grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
+#    grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
+	grep ">" $contigs | sed 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
     dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
     total_lines=$(wc -l <${dastoolthreadstmpheader})
     ((lines_per_file = (total_lines + threads - 1) / threads))
@@ -334,7 +322,8 @@ done < $scaf2bin
 
 for i in $bin_folder\/*.ctgtmp
 do
-bin_id=$(echo $i | perl -pe 's/\.ctgtmp//g')
+# bin_id=$(echo $i | perl -pe 's/\.ctgtmp//g')
+bin_id=$(echo $i | sed 's/\.ctgtmp//g')
 pullseq -i $contigs -n $i > $bin_id\.contigs.fa
 rm $i
 done
