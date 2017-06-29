@@ -51,7 +51,7 @@ function display_help() {
     echo "   -c, --contigs              Contigs in fasta format."
     echo "   -o, --outputbasename       Basename of output files."
     echo "   -l, --labels               Comma separated list of binning prediction names. (optional)"
-    echo "   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch]."
+    echo "   --search_engine            Engine used for single copy gene identification [blast/usearch]."
     echo "                              (default: usearch)"
     echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
     echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
@@ -80,11 +80,8 @@ function display_help() {
 [ $# -eq 0 ] && { display_help ; exit 1; }
 
 binlabels="NULL"
-mappedreads="NULL"
-coverage_table="NULL"
+contigs="NULL"
 debug="FALSE"
-use_gc=1
-use_N50=1
 executed_prodigal=0
 score_threshold=0.1
 threads=1
@@ -176,10 +173,10 @@ command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please mak
 #command -v perl >/dev/null 2>&1 || { echo >&2 "Can't find perl. Please make sure Perl is installed on your system. Aborting."; exit 1; }
 
 #check search engine
-if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
-command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
-search_engine="diamond"
-fi
+# if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
+# command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
+# search_engine="diamond"
+# fi
 if [ "$search_engine" == "blast" ] ||  [ "$search_engine" == "BLAST" ] || [ "$search_engine" == "Blast" ] || [ "$search_engine" == "b" ] || [ "$search_engine" == "B" ] || [ "$search_engine" == "blastp" ]; then
 command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb. Please make sure BLAST is installed on your system.  Aborting."; exit 1; }
 command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Please make sure BLAST is installed on your system. Aborting."; exit 1; }
