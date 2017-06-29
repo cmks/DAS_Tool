@@ -1,8 +1,6 @@
 # DAS Tool version 1.0
 
-Database files are available here: http://banfieldlab.berkeley.edu/~csieber/db.zip
-
-See installation instructions for more details.
+WARNING: DIAMOND causes problems in the single copy gene detection step of DAS Tool. Therefore, we removed the support of DIAMOND until we resolve this issue. Meanwhile, we strongly recommend the use of usearch or blast.
 
 Please cite: http://biorxiv.org/content/early/2017/02/11/107789
 
