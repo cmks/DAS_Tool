@@ -1,6 +1,6 @@
 # DAS Tool version 1.0
 
-WARNING: DIAMOND causes problems in the single copy gene detection step of DAS Tool. Therefore, we removed the support of DIAMOND until we resolve this issue. Meanwhile, we strongly recommend the use of usearch or blast.
+**WARNING:** DIAMOND causes problems in the single copy gene detection step of DAS Tool. Therefore, we removed the support of DIAMOND until we resolve this issue. Meanwhile, we strongly recommend the use of usearch or blast.
 
 Please cite: http://biorxiv.org/content/early/2017/02/11/107789
 
