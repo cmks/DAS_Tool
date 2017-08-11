@@ -28,6 +28,6 @@ wget http://banfieldlab.berkeley.edu/~csieber/db.zip
 unzip db.zip
 
 # Call DAS Tool:
-./DAS_Tool.sh -h
+./DAS_Tool -h
 ``` 
 For detailed instructions please read the documentation.
