@@ -42,6 +42,10 @@ write_bin_evals <- as.logical(args[11])
 create_plots <- as.logical(args[12])
 # 13.debug $debug
 debug <- as.logical(args[13])
+# 14.b $b
+b <- as.numeric(args[14])
+# 15.c $c
+c <- as.numeric(args[15])
 
 options(show.error.messages=FALSE)
 
@@ -51,33 +55,40 @@ if(debug){
   options(show.error.messages=T)
 }
 
+# check DAS Tool package version:
+if(!packageVersion("DASTool")>=numeric_version("1.1.0")){
+  cat('ERROR: DAS_Tool R-package (version 1.1.0) is not installed\n')
+  cat('Please install the current version of DAS_Tool using:\n')
+  cat('$ cd DAS_Tool_installation_directory\n')
+  cat('$ R CMD INSTALL package/DASTool_1.1.0.tar.gz\n')
+  cat('Or read the documentation for more detailed instructions\n')
+  quit()
+}
+
 registerDoMC(threads)
 cat('running DAS Tool with ', threads, ' threads\n', sep = '')
 a <- 1
-b <- 1.5
-c <- 1
 use_Nfifty <- T
 
 
 if(score_threshold > 1){
-  cat('WARNING: score_threshold is set to ', score_threshold, '. Should be between 0 and 1. Setting score_threshold to default (0.1).\n', sep = '')
-  score_threshold <- 0.1
+  cat('WARNING: score_threshold is set to ', score_threshold, '. Should be between 0 and 1. Setting score_threshold to default (0.5).\n', sep = '')
+  score_threshold <- 0.5
 }
 
 setwd(workingdir)
 
-# create_plots <- T
 bin_evaluations <- cherry_pick(scaffolds_to_bins=scaffolds_to_bins,
-                                        bin_set_labels=bin_set_labels,
-                                        bac_scg_matrix=bac_scg_matrix,
-                                        arc_scg_matrix=arc_scg_matrix,
-                                        score_threshold=score_threshold,
-                                        a=a,b=b,c=c,
-                                        output_basename=output_basename,
-                                        length_table=length_table,
-                                        use_N50=use_Nfifty,
-                                        write_bin_evals=write_bin_evals,
-                                        debug=debug)
+                               bin_set_labels=bin_set_labels,
+                               bac_scg_matrix=bac_scg_matrix,
+                               arc_scg_matrix=arc_scg_matrix,
+                               score_threshold=score_threshold,
+                               a=a,b=b,c=c,
+                               output_basename=output_basename,
+                               length_table=length_table,
+                               use_N50=use_Nfifty,
+                               write_bin_evals=write_bin_evals,
+                               debug=debug)
 
 if(create_plots && class(bin_evaluations)=='list'){
   DER_Plot(bin_evaluations,output_basename)

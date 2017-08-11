@@ -58,16 +58,21 @@ function display_help() {
     echo "   --write_bins               Export bins as fasta files  [0/1]. (default: 0)"
     echo "   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo)."
     echo "                              Gene prediction step will be skipped if given. (optional)"
-    echo "   --score_threshold          Score threshold until selection algorithm will keep selecting bins [0..1]."
-    echo "                              (default: 0.1)"
     echo "   -t, --threads              Number of threads to use. (default: 1)"
+    echo "   --score_threshold          Score threshold until selection algorithm will keep selecting bins [0..1]."
+    echo "                              (default: 0.5)"
+    echo "   --duplicate_penalty        Penalty for duplicate single copy genes per bin (weight b)."
+    echo "                              Only change if you know what you're doing. [0..3]"
+    echo "                              (default: 0.6)"
+    echo "   --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]"
+    echo "                              (default: 0.5)"
     echo "   -v, --version              Print version number and exit."
     echo "   -h, --help                 Show this message."
     echo
     echo "Example 1: Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix DASToolRun1: "
     echo  "   ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun1"
     echo
-    echo "Example 2:  Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step. Set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix DASToolRun2: "
+    echo "Example 2:  Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step. Set the number of threads to 2 and score threshold to 0.1. Output files will start with the prefix DASToolRun2: "
     echo  "   ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun2 --threads 2 --score_threshold 0.6 --proteins sample_output/DASToolRun1_proteins.faa"
     echo " "
     echo " "
@@ -83,12 +88,14 @@ binlabels="NULL"
 contigs="NULL"
 debug="FALSE"
 executed_prodigal=0
-score_threshold=0.1
+score_threshold=0.5
 threads=1
 write_bin_evals=1
 create_plots=1
 write_bins=0
 search_engine="usearch"
+b_weight=0.6
+c_weight=0.5
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -129,6 +136,12 @@ while [ "$1" != "" ]; do
                                 display_version
                                 exit
                                 ;;
+        --duplicate_penalty )   shift
+                                b_weight=$1
+                                ;;
+        --megabin_penalty )     shift
+                                c_weight=$1
+                                ;;
         --debug )               shift
                                 debug="TRUE"
                                 ;;
@@ -164,7 +177,7 @@ fi
 #
 PATH="$PATH:$DASTOOL_PULLSEQ"
 PATH="$PATH:$DASTOOL_PRODIGAL"
-PATH="$PATH:$DASTOOL_DIAMOND"
+# PATH="$PATH:$DASTOOL_DIAMOND"
 PATH="$PATH:$DASTOOL_BLAST"
 PATH="$PATH:$DASTOOL_USEARCH"
 
@@ -293,7 +306,7 @@ awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $c
 # 4. Run DAS Tool
 #
 cd $DIR
-Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $create_plots $debug
+Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $create_plots $debug $b_weight $c_weight
 cd $thisdir
 
 

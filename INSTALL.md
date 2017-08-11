@@ -1,4 +1,4 @@
-# Installation instructions for DAS Tool version 1.0
+#Installation instructions for DAS Tool version 1.1
 
 # 1. Dependencies
 
@@ -7,9 +7,9 @@
 - ruby (>= v2.3.1): https://www.ruby-lang.org
 - Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
+- coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
 	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
-	- DIAMOND (>= 0.8.24): https://github.com/bbuchfink/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
@@ -17,11 +17,11 @@
 
 ``` 
 # Download and extract DASTool.zip archive:
-unzip DAS_Tool.v1.0.zip
-cd ./DAS_Tool.v1.0
+unzip DAS_Tool.v1.1.zip
+cd ./DAS_Tool.v1.1
 
 # Install R-packages:
-R CMD INSTALL ./package/DASTool_1.0.0.tar.gz
+R CMD INSTALL ./package/DASTool_1.1.0.tar.gz
 
 # Download SCG database:
 wget http://banfieldlab.berkeley.edu/~csieber/db.zip

@@ -1,4 +1,4 @@
-# DAS Tool version 1.0
+# DAS Tool version 1.1
 
 **WARNING:** DIAMOND causes problems in the single copy gene detection step of DAS Tool. Therefore, we removed the support of DIAMOND until we resolve this issue. Meanwhile, we strongly recommend the use of usearch or blast.
 
@@ -7,14 +7,14 @@ Please cite: http://biorxiv.org/content/early/2017/02/11/107789
 ## 1. Usage
 
 ``` 
-DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
-            -l methodA,...,methodN -c contigs.fa -o myOutput
+DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
+         -l methodA,...,methodN -c contigs.fa -o myOutput
 
    -i, --bins                 Comma separated list of tab separated scaffolds to bin tables.
    -c, --contigs              Contigs in fasta format.
    -o, --outputbasename       Basename of output files.
    -l, --labels               Comma separated list of binning prediction names. (optional)
-   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch].
+   --search_engine            Engine used for single copy gene identification [blast/usearch].
                               (default: usearch)
    --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)
    --create_plots             Create binning performance plots [0/1]. (default: 1)
@@ -22,7 +22,12 @@ DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
    --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo).
                               Gene prediction step will be skipped if given. (optional)
    --score_threshold          Score threshold until selection algorithm will keep selecting bins [0..1].
-                              (default: 0.1)
+                              (default: 0.5)
+   --duplicate_penalty        Penalty for duplicate single copy genes per bin (weight b).
+                              Only change if you know what you're doing. [0..3]
+                              (default: 0.6)
+   --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]
+                              (default: 0.5)
    -t, --threads              Number of threads to use. (default: 1)
    -v, --version              Print version number and exit.
    -h, --help                 Show this message.
@@ -101,6 +106,7 @@ $ ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 - ruby (>= v2.3.1): https://www.ruby-lang.org
 - Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
+- coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
 	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
@@ -110,11 +116,11 @@ $ ./DAS_Tool.sh -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 
 ``` 
 # Download and extract DASTool.zip archive:
-unzip DAS_Tool.v1.0.zip
-cd ./DAS_Tool.v1.0
+unzip DAS_Tool.v1.1.zip
+cd ./DAS_Tool.v1.1
 
 # Install R-packages:
-R CMD INSTALL ./package/DASTool_1.0.0.tar.gz
+R CMD INSTALL ./package/DASTool_1.1.0.tar.gz
 
 # Download latest SCG database:
 wget http://banfieldlab.berkeley.edu/~csieber/db.zip
