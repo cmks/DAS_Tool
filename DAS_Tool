@@ -44,8 +44,8 @@ function display_help() {
     echo " "
     echo "DAS Tool version 1.1"
     echo " "
-    echo "Usage: DAS_Tool.sh -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
-    echo "                   -l methodA,...,methodN -c contigs.fa -o myOutput"
+    echo "Usage: DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
+    echo "                -l methodA,...,methodN -c contigs.fa -o myOutput"
     echo
     echo "   -i, --bins                 Comma separated list of tab separated scaffolds to bin tables."
     echo "   -c, --contigs              Contigs in fasta format."
