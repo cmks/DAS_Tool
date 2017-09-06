@@ -34,7 +34,7 @@ thisdir=$(pwd)
 
 function display_version() {
     echo
-    echo "DAS Tool version 1.1"
+    echo "DAS Tool version 1.1.0"
     echo
     exit 1
 }
@@ -42,7 +42,7 @@ function display_version() {
 
 function display_help() {
     echo " "
-    echo "DAS Tool version 1.1"
+    echo "DAS Tool version 1.1.0"
     echo " "
     echo "Usage: DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
     echo "                -l methodA,...,methodN -c contigs.fa -o myOutput"
@@ -142,8 +142,7 @@ while [ "$1" != "" ]; do
         --megabin_penalty )     shift
                                 c_weight=$1
                                 ;;
-        --debug )               shift
-                                debug="TRUE"
+        --debug )               debug="TRUE"
                                 ;;
         -h | --help )           display_help
                                 exit
@@ -206,14 +205,14 @@ fi
 if [ ! -f "$contigs" ]
 then
   echo contig file not found: $contigs
-  echo stopping
+  echo Aborting
   exit 1
 fi
 
 if [ ! -z "$proteins" ] &&  [ ! -f "$proteins" ]
 then
   echo proteins file not found: $proteins
-  echo stopping
+  echo Aborting
   exit 1
 fi
 
@@ -222,13 +221,25 @@ do
 if [ ! -f $i ];
 then
   echo "scaffolds2bin file not found: $i "
+  echo Aborting
   exit 1
 fi
 done
 
 # Existence and permissions of output directory
-if [ ! -d $(dirname $outputbasename) ]; then echo "Directory for output files does not exist: $(dirname $outputbasename). Aborting"; exit 1; fi
-if [ ! -w $(dirname $outputbasename) ] ; then echo "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting"; exit 1; fi
+if [ ! -d $(dirname "$outputbasename") ]; then echo "Directory for output files does not exist: $(dirname $outputbasename). Aborting"; exit 1; fi
+if [ ! -w $(dirname "$outputbasename") ] ; then echo "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting"; exit 1; fi
+
+# Existence of database directory
+if [ ! -d $DIR\/db ]; then 
+echo "Database directory does not exist: $(dirname $DIR\/db)."
+echo "Trying to extract $DIR\/db.zip";
+unzip -o $DIR\/db.zip -d $DIR
+if [ ! -d $DIR\/db ]; then 
+echo "Extraction failed. Aborting."
+exit 1; 
+fi
+fi
 
 
 #
@@ -244,7 +255,7 @@ then
     proteins=$outputbasename\_proteins.faa
 
     echo "predicting genes using prodigal"
-#    grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
+    #grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
 	grep ">" $contigs | sed 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
     dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
     total_lines=$(wc -l <${dastoolthreadstmpheader})
@@ -264,7 +275,7 @@ then
 elif [ ! -f $proteins ]
 then
   echo protein file not found: $proteins
-  echo stopping
+  echo Aborting
   exit 1
 fi
 
@@ -290,6 +301,11 @@ else
   echo "  " $bscg
   echo "  " $ascg
   echo skipping single copy gene identification
+fi
+
+if [ ! -f $bscg ] || [ ! -f $ascg ]; then
+echo "single copy gene prediction using $search_engine failed. Aborting"
+  exit 1
 fi
 
 

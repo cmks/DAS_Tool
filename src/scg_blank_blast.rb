@@ -16,8 +16,9 @@
 input_file = ARGV[1]
 output_dir = File.dirname(input_file)
 
-datab = ARGV[2]
-puts "database name of all proteins is #{datab}"
+datab_in = ARGV[2]
+datab_out = "#{File.dirname ARGV[1]}" + "/" + "#{File.basename ARGV[2]}"
+puts "database name of all proteins is #{datab_in}"
 
 db_name = ARGV[3]
 puts "database name of SCGs is #{db_name}"
@@ -28,8 +29,8 @@ puts "database lookup is #{db_lookup}"
 threads = ARGV[5]
 
 #build databases
-full_db = system "makeblastdb -in #{datab} -dbtype prot"
-abort "makeblastdb did not work for #{datab}, please check your input file" unless full_db
+full_db = system "makeblastdb -in #{datab_in} -dbtype prot -out #{datab_out}"
+abort "makeblastdb did not work for #{datab_in}, please check your input file" unless full_db
 
 # find SCG candidates
 puts "finding SCG candidates..."
@@ -49,9 +50,9 @@ system "rm #{input_blast_out_whitelist}"
 # verify SCGs by blasting against all proteins of all genomes
 puts "verifying selected SCGs..."
 db_blast_out = File.join(output_dir,File.basename(input_file) + ".all.b6")
-db_blast_ok = system "blastp -db #{datab} -query #{scg_candidates} -outfmt '6 qseqid sseqid pident length qlen slen evalue bitscore' -evalue 0.00001 -out #{db_blast_out} -max_target_seqs 1 -num_threads #{threads}"
+db_blast_ok = system "blastp -db #{datab_out} -query #{scg_candidates} -outfmt '6 qseqid sseqid pident length qlen slen evalue bitscore' -evalue 0.00001 -out #{db_blast_out} -max_target_seqs 1 -num_threads #{threads}"
 abort "verifying blast did not work" unless db_blast_ok
-system "rm #{datab}.psq #{datab}.pin #{datab}.phr"
+system "rm #{datab_out}.psq #{datab_out}.pin #{datab_out}.phr"
 puts "starting annotations of single copy cogs..."
 
 # Read db_lookup
