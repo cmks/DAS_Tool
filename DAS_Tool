@@ -51,7 +51,7 @@ function display_help() {
     echo "   -c, --contigs              Contigs in fasta format."
     echo "   -o, --outputbasename       Basename of output files."
     echo "   -l, --labels               Comma separated list of binning prediction names. (optional)"
-    echo "   --search_engine            Engine used for single copy gene identification [blast/usearch]."
+    echo "   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch]."
     echo "                              (default: usearch)"
     echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
     echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
@@ -66,6 +66,7 @@ function display_help() {
     echo "                              (default: 0.6)"
     echo "   --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]"
     echo "                              (default: 0.5)"
+    echo "   --db_directory             Directory of single copy gene database. (default: install_dir/db)"
     echo "   -v, --version              Print version number and exit."
     echo "   -h, --help                 Show this message."
     echo
@@ -96,6 +97,7 @@ write_bins=0
 search_engine="usearch"
 b_weight=0.6
 c_weight=0.5
+db_dir=$DIR\/db
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -142,6 +144,9 @@ while [ "$1" != "" ]; do
         --megabin_penalty )     shift
                                 c_weight=$1
                                 ;;
+        --db_directory )        shift
+                                db_dir=$1
+                                ;;
         --debug )               debug="TRUE"
                                 ;;
         -h | --help )           display_help
@@ -176,7 +181,7 @@ fi
 #
 PATH="$PATH:$DASTOOL_PULLSEQ"
 PATH="$PATH:$DASTOOL_PRODIGAL"
-# PATH="$PATH:$DASTOOL_DIAMOND"
+PATH="$PATH:$DASTOOL_DIAMOND"
 PATH="$PATH:$DASTOOL_BLAST"
 PATH="$PATH:$DASTOOL_USEARCH"
 
@@ -185,10 +190,10 @@ command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please mak
 #command -v perl >/dev/null 2>&1 || { echo >&2 "Can't find perl. Please make sure Perl is installed on your system. Aborting."; exit 1; }
 
 #check search engine
-# if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
-# command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
-# search_engine="diamond"
-# fi
+if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
+command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
+search_engine="diamond"
+fi
 if [ "$search_engine" == "blast" ] ||  [ "$search_engine" == "BLAST" ] || [ "$search_engine" == "Blast" ] || [ "$search_engine" == "b" ] || [ "$search_engine" == "B" ] || [ "$search_engine" == "blastp" ]; then
 command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb. Please make sure BLAST is installed on your system.  Aborting."; exit 1; }
 command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Please make sure BLAST is installed on your system. Aborting."; exit 1; }
@@ -231,13 +236,13 @@ if [ ! -d $(dirname "$outputbasename") ]; then echo "Directory for output files 
 if [ ! -w $(dirname "$outputbasename") ] ; then echo "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting"; exit 1; fi
 
 # Existence of database directory
-if [ ! -d $DIR\/db ]; then 
-echo "Database directory does not exist: $(dirname $DIR\/db)."
+if [ ! -f $db_dir\/bac.all.faa ] || [ ! -f $db_dir\/arc.all.faa ] || [ ! -f $db_dir\/bac.scg.faa ] || [ ! -f $db_dir\/arc.scg.faa ]  || [ ! -f $db_dir\/bac.scg.lookup ] || [ ! -f $db_dir\/arc.scg.lookup ]; then
+echo "Database directory does not exist or is incomplete: $(dirname $db_dir)."
 echo "Trying to extract $DIR\/db.zip";
-unzip -o $DIR\/db.zip -d $DIR
-if [ ! -d $DIR\/db ]; then 
+unzip -o $DIR\/db.zip -d $db_dir/
+if [ ! -f $db_dir\/bac.all.faa ] || [ ! -f $db_dir\/arc.all.faa ] || [ ! -f $db_dir\/bac.scg.faa ] || [ ! -f $db_dir\/arc.scg.faa ]  || [ ! -f $db_dir\/bac.scg.lookup ] || [ ! -f $db_dir\/arc.scg.lookup ]; then
 echo "Extraction failed. Aborting."
-exit 1; 
+exit 1;
 fi
 fi
 
@@ -288,12 +293,13 @@ bscg=$proteins\.bacteria.scg
 ascg=$proteins\.archaea.scg
 if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $executed_prodigal == 1 ]; then
 command -v ruby >/dev/null 2>&1 || { echo >&2 "Can't find ruby. Please make sure ruby is installed on your system. Aborting."; exit 1; }
+command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Please make sure pullseq is installed on your system. Aborting."; exit 1; }
 echo "identifying single copy genes using $search_engine"
 #predict bacterial SCGs
-ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $DIR\/db/bac.all.faa $DIR\/db/bac.scg.faa $DIR\/db/bac.scg.lookup $threads > /dev/null 2>&1
+ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/bac.all.faa $db_dir\/bac.scg.faa $db_dir\/bac.scg.lookup $threads > /dev/null 2>&1
 mv $proteins\.scg $bscg
 #predict archaeal SCGs
-ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $DIR\/db/arc.all.faa $DIR\/db/arc.scg.faa $DIR\/db/arc.scg.lookup $threads > /dev/null 2>&1
+ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/arc.all.faa $db_dir\/arc.scg.faa $db_dir\/arc.scg.lookup $threads > /dev/null 2>&1
 mv $proteins\.scg $ascg
 rm $proteins\.findSCG.b6 $proteins\.scg.candidates.faa $proteins\.all.b6
 else
