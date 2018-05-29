@@ -1,6 +1,6 @@
 # DAS Tool version 1.1
 
-Please cite: http://biorxiv.org/content/early/2017/02/11/107789
+Please cite: https://www.nature.com/articles/s41564-018-0171-1
 
 ## 1. Usage
 
