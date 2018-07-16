@@ -4,7 +4,6 @@
 
 DAS Tool is an automated method that integrates the results of a flexible number of binning algorithms to calculate an optimized, non-redundant set of bins from a single assembly.
 
-Please cite: https://www.nature.com/articles/s41564-018-0171-1
 
 ## Usage
 
@@ -112,7 +111,7 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
 	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
-  - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
+    - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
