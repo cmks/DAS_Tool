@@ -301,7 +301,7 @@ fi
 #
 bscg=$proteins\.bacteria.scg
 ascg=$proteins\.archaea.scg
-if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $executed_prodigal == 1 ]; then
+if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $(wc -l < $bscg) -eq 0 ] || [ $(wc -l < $ascg) -eq 0 ] || [ $executed_prodigal == 1 ]; then
 command -v ruby >/dev/null 2>&1 || { echo >&2 "Can't find ruby. Please make sure ruby is installed on your system. Aborting."; exit 1; }
 command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Please make sure pullseq is installed on your system. Aborting."; exit 1; }
 echo "identifying single copy genes using $search_engine"
@@ -319,11 +319,17 @@ else
   echo skipping single copy gene identification
 fi
 
+# Stop if single copy gene prediction failed
 if [ ! -f $bscg ] || [ ! -f $ascg ]; then
 echo "single copy gene prediction using $search_engine failed. Aborting"
   exit 1
 fi
 
+# Stop if no single copy genes were predicted
+if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
+  echo "no single copy genes found. Aborting"
+    exit 1
+fi
 
 
 #
