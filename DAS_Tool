@@ -56,6 +56,7 @@ function display_help() {
     echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
     echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
     echo "   --write_bins               Export bins as fasta files  [0/1]. (default: 0)"
+    echo "   --write_unbinned           Export unbinned contigs as fasta file. Only has an effect when write_bins==1 [0/1]. (default: 0)"
     echo "   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo)."
     echo "                              Gene prediction step will be skipped if given. (optional)"
     echo "   -t, --threads              Number of threads to use. (default: 1)"
@@ -79,7 +80,7 @@ function display_help() {
     echo  "   DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun2 --threads 2 --score_threshold 0.6 --proteins sample_output/DASToolRun1_proteins.faa"
     echo " "
     echo " "
-    echo "Please cite: https://doi.org/10.1101/107789"
+    echo "Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1)."
     echo " "
     echo " "
     exit 1
@@ -115,6 +116,7 @@ threads=1
 write_bin_evals=1
 create_plots=1
 write_bins=0
+write_unbinned=0
 search_engine="usearch"
 b_weight=0.6
 c_weight=0.5
@@ -142,6 +144,9 @@ while [ "$1" != "" ]; do
                                 ;;
         --write_bins )          shift
                                 write_bins=$1
+                                ;;
+        --write_unbinned )      shift
+                                write_unbinned=$1
                                 ;;
         --proteins )            shift
                                 proteins=$1
@@ -187,6 +192,11 @@ if [ "$write_bins" == "0" ] || [ "$write_bins" == "false" ] || [ "$write_bins" =
 write_bins="FALSE"
 else
 write_bins="TRUE"
+fi
+if [ "$write_unbinned" == "0" ] || [ "$write_unbinned" == "false" ] || [ "$write_unbinned" == "False" ] || [ "$write_unbinned" == "f" ]; then
+write_unbinned="FALSE"
+else
+write_unbinned="TRUE"
 fi
 if [ "$write_bin_evals" == "0" ] || [ "$write_bin_evals" == "false" ] || [ "$write_bin_evals" == "False" ] || [ "$write_bin_evals" == "f" ]; then
 write_bin_evals="FALSE"
@@ -381,6 +391,7 @@ else
 	write_log $logfile true true true "skipping single copy gene identification"
 fi
 
+# Stop if single copy gene prediction failed
 if [ ! -f $bscg ] || [ ! -f $ascg ]; then
 	write_log $logfile true true true "single copy gene prediction using $search_engine failed. Aborting"
 	exit 1
@@ -392,6 +403,11 @@ if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
 	exit 1
 fi
 
+# Stop if no single copy genes were predicted
+if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
+  echo "no single copy genes found. Aborting"
+    exit 1
+fi
 
 
 #
@@ -414,9 +430,18 @@ cd $thisdir
 #
 # 5. Extract Bins
 #
+
 if [ "$write_bins" == "TRUE" ]; then
 scaf2bin=$outputbasename\_DASTool_scaffolds2bin.txt
 if test -f $scaf2bin; then
+
+# add unbinned contig names to scaf2bin
+if [ $write_unbinned == "TRUE" ]; then
+grep ">" "$contigs" | tr -d ">" > all_contig_names.txt
+cut -f 1 "$scaf2bin" > DAS_Tool_contig_names.txt
+grep -wf DAS_Tool_contig_names.txt -v all_contig_names.txt | sed 's/$/\tbin.unbinned/g' >> $scaf2bin
+rm all_contig_names.txt DAS_Tool_contig_names.txt
+fi
 
 bin_folder=$outputbasename\_DASTool_bins
 if [ -d "$bin_folder" ]; then
