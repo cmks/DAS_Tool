@@ -1,8 +1,11 @@
-# DAS Tool version 1.1
+# DAS Tool for genome resolved metagenomics
 
-Please cite: https://www.nature.com/articles/s41564-018-0171-1
+![DAS Tool](doc/img/logo.png)
 
-## 1. Usage
+DAS Tool is an automated method that integrates the results of a flexible number of binning algorithms to calculate an optimized, non-redundant set of bins from a single assembly.
+
+
+## Usage
 
 ```
 DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
@@ -34,7 +37,7 @@ DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
 ```
 
 
-### 1.1 Input file format
+### Input file format
 - Bins [\--bins, -i]: Tab separated files of scaffold-IDs and bin-IDs.
 Scaffold to bin file example:
 ```
@@ -59,7 +62,7 @@ MPRKNKKLPRHLLVIRTSAMGDVAMLPHALRALKEAYPEVKVTVATKSLFHPFFEG...
 MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 ```
 
-### 1.2 Output files
+### Output files
 - Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
 - Scaffold to bin file of output bins (DASTool_scaffolds2bin.txt).
 - Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
@@ -68,7 +71,7 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 
 
-### 1.3 Examples: Running DAS Tool on sample data.
+### Examples: Running DAS Tool on sample data.
 
 **Example 1:**  Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix *DASToolRun1*:
 ```
@@ -97,8 +100,8 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 ```
 
 
-# 2. Installation
-## 2.1 Dependencies
+# Installation
+## Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
 - R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
@@ -108,11 +111,11 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
 	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
-  - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
+    - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
-## 2.2 Installation
+## Installation
 
 ```
 # Download and extract DASTool.zip archive:
@@ -129,4 +132,6 @@ unzip ./db.zip -d db
 ./DAS_Tool -h
 ```
 
-For detailed instructions please read the documentation.
+# Reference
+
+Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, Matthias Hess, Susannah G. Tringe & Jillian F. Banfield (2018). [Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy.](https://www.nature.com/articles/s41564-018-0171-1) Nature Microbiology. [https://doi.org/10.1038/s41564-018-0171-1.](https://doi.org/10.1038/s41564-018-0171-1)
