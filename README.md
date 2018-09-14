@@ -116,15 +116,14 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 
 ```
 # Download and extract DASTool.zip archive:
-unzip DAS_Tool.v1.1.zip
-cd ./DAS_Tool.v1.1
+unzip DAS_Tool.v1.1.1.zip
+cd ./DAS_Tool.v1.1.1
 
 # Install R-packages:
-R CMD INSTALL ./package/DASTool_1.1.0.tar.gz
+R CMD INSTALL ./package/DASTool_1.1.1.tar.gz
 
-# Download latest SCG database:
-wget http://banfieldlab.berkeley.edu/~csieber/db.zip
-unzip db.zip -d db
+# Unzip SCG database:
+unzip ./db.zip -d db
 
 # Run DAS Tool:
 ./DAS_Tool -h

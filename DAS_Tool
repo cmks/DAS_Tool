@@ -34,7 +34,7 @@ thisdir=$(pwd)
 
 function display_version() {
     echo
-    echo "DAS Tool version 1.1.0"
+    echo "DAS Tool version 1.1.1"
     echo
     exit 1
 }
@@ -42,7 +42,7 @@ function display_version() {
 
 function display_help() {
     echo " "
-    echo "DAS Tool version 1.1.0"
+    echo "DAS Tool version 1.1.1"
     echo " "
     echo "Usage: DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
     echo "                -l methodA,...,methodN -c contigs.fa -o myOutput"
@@ -67,14 +67,16 @@ function display_help() {
     echo "   --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]"
     echo "                              (default: 0.5)"
     echo "   --db_directory             Directory of single copy gene database. (default: install_dir/db)"
+    echo "   --resume                   Use existing predicted single copy gene files from a previous run [0/1]. (default: 0)"
+    echo "   --debug                    Write debug information to log file."
     echo "   -v, --version              Print version number and exit."
     echo "   -h, --help                 Show this message."
     echo
     echo "Example 1: Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix DASToolRun1: "
-    echo  "   ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun1"
+    echo  "   DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun1"
     echo
     echo "Example 2:  Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step. Set the number of threads to 2 and score threshold to 0.1. Output files will start with the prefix DASToolRun2: "
-    echo  "   ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun2 --threads 2 --score_threshold 0.6 --proteins sample_output/DASToolRun1_proteins.faa"
+    echo  "   DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv -l concoct,maxbin,metabat,tetraESOM -c sample_data/sample.human.gut_contigs.fa -o sample_output/DASToolRun2 --threads 2 --score_threshold 0.6 --proteins sample_output/DASToolRun1_proteins.faa"
     echo " "
     echo " "
     echo "Please cite: https://doi.org/10.1101/107789"
@@ -83,12 +85,31 @@ function display_help() {
     exit 1
 }
 
+# usage: write_log file_name append write_to_std write_to_file [message for logging...]
+function write_log () {
+if [ $4 = true ]; then
+	if [ $2 = true ]; then
+		echo "${@:5}" >> $1
+	else
+		echo "${@:5}" > $1
+	fi
+fi
+
+if [ $3 = true ]; then
+	echo "${@:5}"
+fi
+
+}
+
+
+
 [ $# -eq 0 ] && { display_help ; exit 1; }
 
 binlabels="NULL"
 contigs="NULL"
-debug="FALSE"
+debug=false
 executed_prodigal=0
+resume_scg=0
 score_threshold=0.5
 threads=1
 write_bin_evals=1
@@ -147,7 +168,10 @@ while [ "$1" != "" ]; do
         --db_directory )        shift
                                 db_dir=$1
                                 ;;
-        --debug )               debug="TRUE"
+        --resume )              shift
+                                resume_scg=$1
+                                ;;
+        --debug )               debug=true
                                 ;;
         -h | --help )           display_help
                                 exit
@@ -174,7 +198,14 @@ create_plots="FALSE"
 else
 create_plots="TRUE"
 fi
+if [ "$resume_scg" == "0" ] || [ "$resume_scg" == "false" ] || [ "$resume_scg" == "False" ] || [ "$resume_scg" == "f" ]; then
+resume_scg="FALSE"
+else
+resume_scg="TRUE"
+fi
 
+
+logfile=$outputbasename\_DASTool.log
 
 #
 # 0.1 Load dependencies
@@ -184,6 +215,28 @@ PATH="$PATH:$DASTOOL_PRODIGAL"
 PATH="$PATH:$DASTOOL_DIAMOND"
 PATH="$PATH:$DASTOOL_BLAST"
 PATH="$PATH:$DASTOOL_USEARCH"
+
+
+write_log $logfile false false $debug "DAS Tool run on " $(date)
+write_log $logfile true false $debug ""
+
+write_log $logfile true false $debug "User environment details:"
+write_log $logfile true false $debug "Rscript path: " $(which Rscript)
+write_log $logfile true false $debug "Rscript version: " $(Rscript --version 2>&1)
+write_log $logfile true false $debug "diamond path: " $(which diamond)
+write_log $logfile true false $debug "diamond version: " $(diamond --version)
+write_log $logfile true false $debug "blastp path: " $(which blastp)
+write_log $logfile true false $debug "blastp version: " $(blastp -version)
+write_log $logfile true false $debug "usearch path: " $(which usearch)
+write_log $logfile true false $debug "usearch version: " $(usearch --version)
+write_log $logfile true false $debug "pullseq path: " $(which pullseq)
+write_log $logfile true false $debug "pullseq version: " $(pullseq --version 2>&1 | grep Version)
+write_log $logfile true false $debug "prodigal path: " $(which prodigal)
+write_log $logfile true false $debug "prodigal version: " $(prodigal -v 2>&1)
+write_log $logfile true false $debug "ruby path: " $(which ruby)
+write_log $logfile true false $debug "ruby version: " $(ruby --version)
+write_log $logfile true false $debug ""
+
 
 #Check for R installation
 command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please make sure R (>= 3.2.3) is installed on your system. Aborting."; exit 1; }
@@ -209,15 +262,15 @@ fi
 #
 if [ ! -f "$contigs" ]
 then
-  echo contig file not found: $contigs
-  echo Aborting
+  write_log $logfile true true true contig file not found: $contigs
+  write_log $logfile true true true Aborting.
   exit 1
 fi
 
 if [ ! -z "$proteins" ] &&  [ ! -f "$proteins" ]
 then
-  echo proteins file not found: $proteins
-  echo Aborting
+  write_log $logfile true true true proteins file not found: $proteins
+  write_log $logfile true true true Aborting.
   exit 1
 fi
 
@@ -225,27 +278,36 @@ for i in $(echo $scaffoldstobins | tr "," " ")
 do
 if [ ! -f $i ];
 then
-  echo "scaffolds2bin file not found: $i "
-  echo Aborting
+  write_log $logfile true true true "scaffolds2bin file not found: $i "
+  write_log $logfile true true true Aborting.
   exit 1
 fi
 done
 
 # Existence and permissions of output directory
-if [ ! -d $(dirname "$outputbasename") ]; then echo "Directory for output files does not exist: $(dirname $outputbasename). Aborting"; exit 1; fi
-if [ ! -w $(dirname "$outputbasename") ] ; then echo "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting"; exit 1; fi
+if [ ! -d $(dirname "$outputbasename") ]; then 
+	write_log $logfile true true true "Directory for output files does not exist: $(dirname $outputbasename). Aborting"
+	exit 1
+fi
+
+if [ ! -w $(dirname "$outputbasename") ]; then
+	write_log $logfile true true true "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting."
+	exit 1; 
+fi
 
 # Existence of database directory
 if [ ! -f $db_dir\/bac.all.faa ] || [ ! -f $db_dir\/arc.all.faa ] || [ ! -f $db_dir\/bac.scg.faa ] || [ ! -f $db_dir\/arc.scg.faa ]  || [ ! -f $db_dir\/bac.scg.lookup ] || [ ! -f $db_dir\/arc.scg.lookup ]; then
-echo "Database directory does not exist or is incomplete: $(dirname $db_dir)."
-echo "Trying to extract $DIR\/db.zip";
-unzip -o $DIR\/db.zip -d $db_dir/
-if [ ! -f $db_dir\/bac.all.faa ] || [ ! -f $db_dir\/arc.all.faa ] || [ ! -f $db_dir\/bac.scg.faa ] || [ ! -f $db_dir\/arc.scg.faa ]  || [ ! -f $db_dir\/bac.scg.lookup ] || [ ! -f $db_dir\/arc.scg.lookup ]; then
-echo "Extraction failed. Aborting."
-exit 1;
-fi
+	write_log $logfile true true true "Database directory does not exist or is incomplete: $(dirname $db_dir)."
+	write_log $logfile true true true "Trying to extract $DIR\/db.zip";
+	unzip -o $DIR\/db.zip -d $db_dir/
+	if [ ! -f $db_dir\/bac.all.faa ] || [ ! -f $db_dir\/arc.all.faa ] || [ ! -f $db_dir\/bac.scg.faa ] || [ ! -f $db_dir\/arc.scg.faa ]  || [ ! -f $db_dir\/bac.scg.lookup ] || [ ! -f $db_dir\/arc.scg.lookup ]; then
+		write_log $logfile true true true "Extraction failed. Aborting."
+		exit 1;
+	fi
 fi
 
+
+write_log $logfile true true $debug "Running DAS Tool using" $threads "threads."
 
 #
 # 1. Run Prodigal
@@ -259,7 +321,8 @@ then
 
     proteins=$outputbasename\_proteins.faa
 
-    echo "predicting genes using prodigal"
+    write_log $logfile true true true "predicting genes using" $(prodigal -v 2>&1)
+    
     #grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
 	grep ">" $contigs | sed 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
     dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
@@ -291,27 +354,42 @@ fi
 #
 bscg=$proteins\.bacteria.scg
 ascg=$proteins\.archaea.scg
-if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $executed_prodigal == 1 ]; then
-command -v ruby >/dev/null 2>&1 || { echo >&2 "Can't find ruby. Please make sure ruby is installed on your system. Aborting."; exit 1; }
-command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Please make sure pullseq is installed on your system. Aborting."; exit 1; }
-echo "identifying single copy genes using $search_engine"
-#predict bacterial SCGs
-ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/bac.all.faa $db_dir\/bac.scg.faa $db_dir\/bac.scg.lookup $threads > /dev/null 2>&1
-mv $proteins\.scg $bscg
-#predict archaeal SCGs
-ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/arc.all.faa $db_dir\/arc.scg.faa $db_dir\/arc.scg.lookup $threads > /dev/null 2>&1
-mv $proteins\.scg $ascg
-rm $proteins\.findSCG.b6 $proteins\.scg.candidates.faa $proteins\.all.b6
+if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $(wc -l < $bscg) -eq 0 ] || [ $(wc -l < $ascg) -eq 0 ] || [ $executed_prodigal -eq 1 ] || [  $resume_scg == 'FALSE' ]; then
+	command -v ruby >/dev/null 2>&1 || { echo >&2 "Can't find ruby. Please make sure ruby is installed on your system. Aborting."; exit 1; }
+	command -v pullseq >/dev/null 2>&1 || { echo >&2 "Can't find pullseq. Please make sure pullseq is installed on your system. Aborting."; exit 1; }
+	if [ "$search_engine" == "usearch" ]; then
+		write_log $logfile true true true "identifying single copy genes using" $(usearch --version)
+	fi
+	if [ "$search_engine" == "blast" ]; then
+		write_log $logfile true true true "identifying single copy genes using" $(blastp -version)
+	fi
+	if [ "$search_engine" == "diamond" ]; then
+		write_log $logfile true true true "identifying single copy genes using" $(diamond --version)
+	fi
+
+	#predict bacterial SCGs
+	ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/bac.all.faa $db_dir\/bac.scg.faa $db_dir\/bac.scg.lookup $threads > /dev/null 2>&1
+	mv $proteins\.scg $bscg
+	#predict archaeal SCGs
+	ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/arc.all.faa $db_dir\/arc.scg.faa $db_dir\/arc.scg.lookup $threads > /dev/null 2>&1
+	mv $proteins\.scg $ascg
+	rm $proteins\.findSCG.b6 $proteins\.scg.candidates.faa $proteins\.all.b6
 else
-  echo found predicted single copy genes:
-  echo "  " $bscg
-  echo "  " $ascg
-  echo skipping single copy gene identification
+	write_log $logfile true true true "found predicted single copy genes:"
+	write_log $logfile true true true "  " $bscg
+	write_log $logfile true true true "  " $ascg
+	write_log $logfile true true true "skipping single copy gene identification"
 fi
 
 if [ ! -f $bscg ] || [ ! -f $ascg ]; then
-echo "single copy gene prediction using $search_engine failed. Aborting"
-  exit 1
+	write_log $logfile true true true "single copy gene prediction using $search_engine failed. Aborting"
+	exit 1
+fi
+
+# Stop if no single copy genes were predicted
+if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
+	write_log $logfile true true true "no single copy genes found. Aborting"
+	exit 1
 fi
 
 
@@ -346,7 +424,7 @@ if [ -d "$bin_folder" ]; then
 fi
 mkdir $bin_folder
 
-echo extracting bins to $bin_folder
+write_log $logfile true true true extracting bins to $bin_folder
 while read scaffold bin
 do
 echo $scaffold >> $bin_folder\/$bin\.ctgtmp
@@ -354,7 +432,6 @@ done < $scaf2bin
 
 for i in $bin_folder\/*.ctgtmp
 do
-# bin_id=$(echo $i | perl -pe 's/\.ctgtmp//g')
 bin_id=$(echo $i | sed 's/\.ctgtmp//g')
 pullseq -i $contigs -n $i > $bin_id\.contigs.fa
 rm $i
