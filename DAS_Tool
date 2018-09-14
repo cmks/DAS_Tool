@@ -403,12 +403,6 @@ if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
 	exit 1
 fi
 
-# Stop if no single copy genes were predicted
-if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
-  echo "no single copy genes found. Aborting"
-    exit 1
-fi
-
 
 #
 # 3. Calculate Contig Length
