@@ -160,12 +160,11 @@ $ R
 
 # Preparation of input files
 
-Not all binning tools provide results in a tab separated file of scaffold-IDs and bin-IDs. A helper script can be used to convert a set of bins in fasta format to tabular scaffold2bin file, which can be used as input for DAS Tool: `src/Fasta_to_Scaffolds2Bin.sh -h`.
+Not all binning tools provide results in a tab separated file of scaffold-IDs and bin-IDs. A helper script can be used to convert a set of bins in fasta format to tabular scaffolds2bin file, which can be used as input for DAS Tool: `src/Fasta_to_Scaffolds2Bin.sh -h`.
 
 ### Usage:
 ```
 Fasta_to_Scaffolds2Bin: Converts genome bins in fasta format to scaffolds-to-bin table.
- (DAS Tool helper script)
 
 Usage: Fasta_to_Scaffolds2Bin.sh -e fasta > my_scaffolds2bin.tsv
 
