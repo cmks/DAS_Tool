@@ -1,11 +1,14 @@
 # DAS Tool for genome resolved metagenomics
 
-![DAS Tool](doc/img/logo.png)
+![DAS Tool](img/logo.png)
 
 DAS Tool is an automated method that integrates the results of a flexible number of binning algorithms to calculate an optimized, non-redundant set of bins from a single assembly.
 
+# Reference
 
-## Usage
+Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, Matthias Hess, Susannah G. Tringe & Jillian F. Banfield (2018). [Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy.](https://www.nature.com/articles/s41564-018-0171-1) Nature Microbiology. [https://doi.org/10.1038/s41564-018-0171-1.](https://doi.org/10.1038/s41564-018-0171-1)
+
+# Usage
 
 ```
 DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
@@ -30,6 +33,8 @@ DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
    --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]
                               (default: 0.5)
    --db_directory             Directory of single copy gene database. (default: install_dir/db)
+   --resume                   Use existing predicted single copy gene files from a previous run [0/1]. (default: 0)
+   --debug                    Write debug information to log file.
    -t, --threads              Number of threads to use. (default: 1)
    -v, --version              Print version number and exit.
    -h, --help                 Show this message.
@@ -39,7 +44,7 @@ DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
 
 ### Input file format
 - Bins [\--bins, -i]: Tab separated files of scaffold-IDs and bin-IDs.
-Scaffold to bin file example:
+Scaffolds to bin file example:
 ```
 Scaffold_1	bin.01
 Scaffold_8	bin.01
@@ -64,7 +69,7 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 ### Output files
 - Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
-- Scaffold to bin file of output bins (DASTool_scaffolds2bin.txt).
+- Scaffolds to bin file of output bins (DASTool_scaffolds2bin.txt).
 - Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
 - Plots showing the amount of high quality bins and score distribution of bins per method, if ```--create_plots 1``` is set (DASTool_hqBins.pdf, DASTool_scores.pdf).
 - Bins in fasta format if ```--write_bins 1``` is set (DASTool_bins).
@@ -100,8 +105,7 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 ```
 
 
-# Installation
-## Dependencies
+# Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
 - R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
@@ -115,24 +119,98 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
-## Installation
+# Quick installation
 
 ```
 # Download and extract DASTool.zip archive:
-unzip DAS_Tool.v1.1.zip
-cd ./DAS_Tool.v1.1
+unzip DAS_Tool-1.x.x.zip
+cd ./DAS_Tool-1.x.x
 
 # Install R-packages:
-R CMD INSTALL ./package/DASTool_1.1.0.tar.gz
+R CMD INSTALL ./package/DASTool_1.x.x.tar.gz
 
-# Download latest SCG database:
-wget http://banfieldlab.berkeley.edu/~csieber/db.zip
-unzip db.zip -d db
+# Unzip SCG database:
+unzip ./db.zip -d db
 
 # Run DAS Tool:
 ./DAS_Tool -h
 ```
 
-# Reference
 
-Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, Matthias Hess, Susannah G. Tringe & Jillian F. Banfield (2018). [Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy.](https://www.nature.com/articles/s41564-018-0171-1) Nature Microbiology. [https://doi.org/10.1038/s41564-018-0171-1.](https://doi.org/10.1038/s41564-018-0171-1)
+# Installation of dependent R-packages
+
+```
+$ R
+> repo='http://cran.us.r-project.org' #select a repository
+> install.packages('doMC', repos=repo, dependencies = T)
+> install.packages('data.table', repos=repo, dependencies = T) > install.packages('ggplot2', repos=repo, dependencies = T)
+> q() #quit R-session
+```
+
+After installing all dependent R-packages, the DAS Tool R-functions can be installed in a bash terminal:
+```
+$ R CMD INSTALL ./package/DASTool_1.x.x.tar.gz
+```
+...or in an R-session:
+```
+$ R
+> install.packages('package/DASTool_1.x.x.tar.gz')
+> q() #quit R-session
+```
+
+# Preparation of input files
+
+Not all binning tools provide results in a tab separated file of scaffold-IDs and bin-IDs. A helper script can be used to convert a set of bins in fasta format to tabular scaffolds2bin file, which can be used as input for DAS Tool: `src/Fasta_to_Scaffolds2Bin.sh -h`.
+
+### Usage:
+```
+Fasta_to_Scaffolds2Bin: Converts genome bins in fasta format to scaffolds-to-bin table.
+
+Usage: Fasta_to_Scaffolds2Bin.sh -e fasta > my_scaffolds2bin.tsv
+
+   -e, --extension            Extension of fasta files. (default: fasta)
+   -i, --input_folder         Folder with bins in fasta format. (default: ./)
+   -h, --help                 Show this message.
+```
+
+### Example: Converting MaxBin fasta output into tab separated scaffolds2bin file:
+```
+$ ls /maxbin/output/folder
+maxbin.001.fasta   maxbin.002.fasta   maxbin.003.fasta...
+
+$ src/Fasta_to_Scaffolds2Bin.sh -i /maxbin/output/folder -e fasta > maxbin.scaffolds2bin.tsv
+
+$ head gut_maxbin2_scaffolds2bin.tsv
+NODE_10_length_127450_cov_375.783524	maxbin.001
+NODE_27_length_95143_cov_427.155298	maxbin.001
+NODE_51_length_78315_cov_504.322425	maxbin.001
+NODE_84_length_66931_cov_376.684775	maxbin.001
+NODE_87_length_65653_cov_460.202156	maxbin.001
+```
+
+Some binning tools (such as CONCOCT) provide a comma separated tabular output. To convert a comma separated file into a tab separated file a one liner can be used: `perl -pe "s/,/\t/g;" scaffolds2bin.csv > scaffolds2bin.tsv`.
+
+### Example: Converting CONCOCT csv output into tab separated scaffolds2bin file:
+```
+$ head concoct_clustering_gt1000.csv
+NODE_2_length_147519_cov_33.166976,42
+NODE_3_length_141012_cov_38.678171,42
+NODE_4_length_139685_cov_35.741896,42
+
+$ perl -pe "s/,/\tconcoct./g;" concoct_clustering_gt1000.csv > concoct.scaffolds2bin.tsv
+
+$ head concoct.scaffolds2bin.tsv
+NODE_2_length_147519_cov_33.166976	concoct.42
+NODE_3_length_141012_cov_38.678171	concoct.42
+NODE_4_length_139685_cov_35.741896	concoct.42
+```
+
+# Trouble shooting and FAQs
+
+### Dependencies not found
+
+**Problem:** All dependencies are installed and the environmental variables are set but DAS Tool still claims that specific depencendies are missing.
+**Solution:** Make sure that the dependency executable names are correct. For example USEARCH has to be executable with the command
+If your USEARCH binary is called differently (e.g. `usearch9.0.2132_i86linux32`) you can either rename it or add a symbolic link called usearch:
+
+```$ ln -s usearch9.0.2132_i86linux32 usearch```
