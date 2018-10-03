@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # DAS Tool for genome-resolved metagenomics
 # by Christian MK Sieber (csieber@lbl.gov)
