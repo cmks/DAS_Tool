@@ -119,6 +119,15 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
+# Instalation using conda
+Thanks to @keuv-grvl and @silask , DAS Tool is available trough bioconda. 
+
+
+```
+conda install -c bioconda das_tool
+```
+
+
 # Quick installation
 
 ```
