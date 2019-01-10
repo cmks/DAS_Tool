@@ -229,23 +229,15 @@ PATH="$PATH:$DASTOOL_USEARCH"
 
 write_log $logfile false false $debug "DAS Tool run on " $(date)
 write_log $logfile true false $debug ""
-
 write_log $logfile true false $debug "User environment details:"
 write_log $logfile true false $debug "Rscript path: " $(which Rscript)
 write_log $logfile true false $debug "Rscript version: " $(Rscript --version 2>&1)
-write_log $logfile true false $debug "diamond path: " $(which diamond)
-write_log $logfile true false $debug "diamond version: " $(diamond --version)
-write_log $logfile true false $debug "blastp path: " $(which blastp)
-write_log $logfile true false $debug "blastp version: " $(blastp -version)
-write_log $logfile true false $debug "usearch path: " $(which usearch)
-write_log $logfile true false $debug "usearch version: " $(usearch --version)
 write_log $logfile true false $debug "pullseq path: " $(which pullseq)
 write_log $logfile true false $debug "pullseq version: " $(pullseq --version 2>&1 | grep Version)
 write_log $logfile true false $debug "prodigal path: " $(which prodigal)
 write_log $logfile true false $debug "prodigal version: " $(prodigal -v 2>&1)
 write_log $logfile true false $debug "ruby path: " $(which ruby)
 write_log $logfile true false $debug "ruby version: " $(ruby --version)
-write_log $logfile true false $debug ""
 
 
 #Check for R installation
@@ -254,18 +246,25 @@ command -v Rscript >/dev/null 2>&1 || { echo >&2 "Can't find Rscript. Please mak
 
 #check search engine
 if [ "$search_engine" == "diamond" ] || [ "$search_engine" == "DIAMOND" ] || [ "$search_engine" == "Diamond" ] || [ "$search_engine" == "d" ] || [ "$search_engine" == "D" ]; then
+write_log $logfile true false $debug "diamond path: " $(which diamond)
+write_log $logfile true false $debug "diamond version: " $(diamond --version)
 command -v diamond >/dev/null 2>&1 || { echo >&2 "Can't find diamond. Please make sure DIAMOND is installed on your system. Aborting."; exit 1; }
 search_engine="diamond"
 fi
 if [ "$search_engine" == "blast" ] ||  [ "$search_engine" == "BLAST" ] || [ "$search_engine" == "Blast" ] || [ "$search_engine" == "b" ] || [ "$search_engine" == "B" ] || [ "$search_engine" == "blastp" ]; then
+write_log $logfile true false $debug "blastp path: " $(which blastp)
+write_log $logfile true false $debug "blastp version: " $(blastp -version)
 command -v makeblastdb >/dev/null 2>&1 || { echo >&2 "Can't find makeblastdb. Please make sure BLAST is installed on your system.  Aborting."; exit 1; }
 command -v blastp >/dev/null 2>&1 || { echo >&2 "Can't find blastp. Please make sure BLAST is installed on your system. Aborting."; exit 1; }
 search_engine="blast"
 fi
 if [ "$search_engine" == "usearch" ] || [ "$search_engine" == "USEARCH" ] || [ "$search_engine" == "UBLAST" ] || [ "$search_engine" == "Usearch" ] || [ "$search_engine" == "u" ] || [ "$search_engine" == "U" ] || [ "$search_engine" == "ublast" ] || [ "$search_engine" == "Ublast" ]; then
+write_log $logfile true false $debug "usearch path: " $(which usearch)
+write_log $logfile true false $debug "usearch version: " $(usearch --version)
 command -v usearch >/dev/null 2>&1 || { echo >&2 "Can't find usearch. Please make sure USEARCH is installed on your system. Aborting."; exit 1; }
 search_engine="usearch"
 fi
+write_log $logfile true false $debug ""
 
 #
 # 0.2 Check existence of files
@@ -295,14 +294,14 @@ fi
 done
 
 # Existence and permissions of output directory
-if [ ! -d $(dirname "$outputbasename") ]; then 
-	write_log $logfile true true true "Directory for output files does not exist: $(dirname $outputbasename). Aborting"
-	exit 1
+if [ ! -d $(dirname "$outputbasename") ]; then
+	write_log $logfile true true true "Directory for output files does not exist. Attempting to create directory $(dirname $outputbasename)"
+	mkdir $(dirname $outputbasename)
 fi
 
 if [ ! -w $(dirname "$outputbasename") ]; then
 	write_log $logfile true true true "Can't write in output folder: $(dirname $outputbasename). Permission denied. Aborting."
-	exit 1; 
+	exit 1;
 fi
 
 # Existence of database directory
@@ -332,7 +331,7 @@ then
     proteins=$outputbasename\_proteins.faa
 
     write_log $logfile true true true "predicting genes using" $(prodigal -v 2>&1)
-    
+
     #grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
 	grep ">" $contigs | sed 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
     dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
