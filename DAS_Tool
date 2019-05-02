@@ -406,8 +406,9 @@ fi
 #
 # 3. Calculate Contig Length
 #
+write_log $logfile true true true "calculating contig lengths."
 length_table=$outputbasename\.seqlength
-awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $contigs | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n\([^>]\)/?\1/g' | tr '?' '\t' | sed 's/>//g' > $length_table
+awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $contigs | tr -d \\r | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n\([^>]\)/?\1/g' | tr '?' '\t' | sed 's/>//g' > $length_table
 
 
 
