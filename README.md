@@ -119,16 +119,7 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 
-# Instalation using conda
-Thanks to @keuv-grvl and @silask , DAS Tool is available trough bioconda. 
-
-
-```
-conda install -c bioconda das_tool
-```
-
-
-# Quick installation
+# Installation
 
 ```
 # Download and extract DASTool.zip archive:
@@ -146,13 +137,13 @@ unzip ./db.zip -d db
 ```
 
 
-# Installation of dependent R-packages
-
+Installation of dependent R-packages:
 ```
 $ R
 > repo='http://cran.us.r-project.org' #select a repository
 > install.packages('doMC', repos=repo, dependencies = T)
-> install.packages('data.table', repos=repo, dependencies = T) > install.packages('ggplot2', repos=repo, dependencies = T)
+> install.packages('data.table', repos=repo, dependencies = T)
+> install.packages('ggplot2', repos=repo, dependencies = T)
 > q() #quit R-session
 ```
 
@@ -166,6 +157,33 @@ $ R
 > install.packages('package/DASTool_1.x.x.tar.gz')
 > q() #quit R-session
 ```
+
+
+# Installation using conda or homebrew
+DAS Tool can now also be installed via bioconda (kudos @keuv-grvl and @silask) and homebrew (kudos @gaberoo).
+
+## Bioconda
+Bioconda repository: https://bioconda.github.io/recipes/das_tool/README.html
+
+Add bioconda channel:
+```
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+```
+Install DAS Tool using conda:
+```
+conda install -c bioconda das_tool
+```
+
+## Homebrew
+Homebrew-bio repository: https://github.com/brewsci/homebrew-bio
+
+Install DAS Tool using homebrew:
+```
+brew install brewsci/bio/das_tool
+```
+
 
 # Preparation of input files
 
@@ -219,6 +237,7 @@ NODE_4_length_139685_cov_35.741896	concoct.42
 ### Dependencies not found
 
 **Problem:** All dependencies are installed and the environmental variables are set but DAS Tool still claims that specific depencendies are missing.
+
 **Solution:** Make sure that the dependency executable names are correct. For example USEARCH has to be executable with the command
 If your USEARCH binary is called differently (e.g. `usearch9.0.2132_i86linux32`) you can either rename it or add a symbolic link called usearch:
 
