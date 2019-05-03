@@ -160,7 +160,7 @@ $ R
 
 
 # Installation using conda or homebrew
-DAS Tool can now also be installed via bioconda (kudos @keuv-grvl and @silask) and homebrew (kudos @gaberoo).
+DAS Tool can now also be installed via bioconda (kudos [@keuv-grvl]("https://github.com/keuv-grvl") and [@silask]("https://github.com/SilasK")) and homebrew (kudos [@gaberoo]("https://github.com/gaberoo")).
 
 ## Bioconda
 Bioconda repository: https://bioconda.github.io/recipes/das_tool/README.html
@@ -179,7 +179,7 @@ conda install -c bioconda das_tool
 ## Homebrew
 Homebrew-bio repository: https://github.com/brewsci/homebrew-bio
 
-Install DAS Tool using homebrew:
+Install DAS Tool using Homebrew:
 ```
 brew install brewsci/bio/das_tool
 ```
