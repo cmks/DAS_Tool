@@ -334,10 +334,10 @@ then
 
     #grep ">" $contigs | perl -pe 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
 	grep ">" $contigs | sed 's/>//g;' | shuf > $outputbasename\_dastoolthreadstmpheader
-    dastoolthreadstmpheader=$outputbasename\_dastoolthreadstmpheader
-    total_lines=$(wc -l <${dastoolthreadstmpheader})
+    dastoolthreadstmpheader = $outputbasename\_dastoolthreadstmpheader
+    total_lines = $(wc -l <$dastoolthreadstmpheader)
     ((lines_per_file = (total_lines + threads - 1) / threads))
-    split --numeric-suffixes --lines=${lines_per_file} ${dastoolthreadstmpheader} $outputbasename\_dastoolthreadstmp.
+    split -l $lines_per_file $dastoolthreadstmpheader $outputbasename\_dastoolthreadstmp.
     rm $outputbasename\_dastoolthreadstmpheader
 
     for i in $outputbasename\_dastoolthreadstmp.*
