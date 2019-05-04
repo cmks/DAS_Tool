@@ -114,9 +114,11 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
-	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
-    - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
+	- USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
+  - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
+
+\*) The free version of USEARCH only can use up to 4Gb RAM. Therefore, the use of DIAMOND or BLAST+ is recommended for big datasets.
 
 
 # Installation
@@ -160,10 +162,11 @@ $ R
 
 
 # Installation using conda or homebrew
-DAS Tool can now also be installed via bioconda (kudos [@keuv-grvl]("https://github.com/keuv-grvl") and [@silask]("https://github.com/SilasK")) and homebrew (kudos [@gaberoo]("https://github.com/gaberoo")).
+DAS Tool now can also be installed via bioconda and homebrew.
 
 ## Bioconda
-Bioconda repository: https://bioconda.github.io/recipes/das_tool/README.html
+
+ Bioconda repository: https://bioconda.github.io/recipes/das_tool/README.html. Thanks @[keuv-grvl]("https://github.com/keuv-grvl") and @[silask]("https://github.com/SilasK")!.
 
 Add bioconda channel:
 ```
@@ -177,7 +180,8 @@ conda install -c bioconda das_tool
 ```
 
 ## Homebrew
-Homebrew-bio repository: https://github.com/brewsci/homebrew-bio
+
+Homebrew-bio repository: https://github.com/brewsci/homebrew-bio. Thanks @[gaberoo]("https://github.com/gaberoo")!
 
 Install DAS Tool using Homebrew:
 ```
@@ -241,4 +245,25 @@ NODE_4_length_139685_cov_35.741896	concoct.42
 **Solution:** Make sure that the dependency executable names are correct. For example USEARCH has to be executable with the command
 If your USEARCH binary is called differently (e.g. `usearch9.0.2132_i86linux32`) you can either rename it or add a symbolic link called usearch:
 
-```$ ln -s usearch9.0.2132_i86linux32 usearch```
+```
+$ ln -s usearch9.0.2132_i86linux32 usearch
+```
+
+### Memory limit of 32-bit usearch version exceeded
+
+**Problem:** Running DAS Tool with the free version of USEARCH on a large metagenomic dataset results in the following error:
+```
+---Fatal error---
+Memory limit of 32-bit process exceeded, 64-bit build required
+makeblastdb did not work for my_proteins.faa, please check your input file
+```
+
+**Solution:** Use DIAMOND or BLAST as search engine:
+```
+DAS_Tool --search_engine diamond ...
+```
+or
+```
+DAS_Tool --search_engine blast ...
+```
+or install the 64 bit version of USEARCH.

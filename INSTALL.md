@@ -10,12 +10,15 @@
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
 	- USEARCH (>= 8.1): http://www.drive5.com/usearch/download.html
+	- DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
+
 
 
 # 2. Installation
 
-``` 
+## Github
+```
 # Download and extract DASTool.zip archive:
 unzip DAS_Tool.v1.1.zip
 cd ./DAS_Tool.v1.1
@@ -28,5 +31,31 @@ unzip ./db.zip
 
 # Call DAS Tool:
 ./DAS_Tool -h
-``` 
+```
+
+## Bioconda
+
+ Bioconda repository: https://bioconda.github.io/recipes/das_tool/README.html. Thanks @[keuv-grvl]("https://github.com/keuv-grvl") and @[silask]("https://github.com/SilasK")!.
+
+Add bioconda channel:
+```
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+```
+Install DAS Tool using conda:
+```
+conda install -c bioconda das_tool
+```
+
+## Homebrew
+
+Homebrew-bio repository: https://github.com/brewsci/homebrew-bio. Thanks @[gaberoo]("https://github.com/gaberoo")!
+
+Install DAS Tool using Homebrew:
+```
+brew install brewsci/bio/das_tool
+```
+
+
 For detailed instructions please read the documentation.
