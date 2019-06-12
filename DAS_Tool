@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # DAS Tool for genome-resolved metagenomics
 # by Christian MK Sieber (csieber@lbl.gov)
@@ -391,7 +391,7 @@ if [ ! -f $bscg ] || [ ! -f $ascg ] || [ $(wc -l < $bscg) -eq 0 ] || [ $(wc -l <
 	else
 		ruby $DIR\/src/scg_blank_$search_engine\.rb $search_engine $proteins $db_dir\/arc.all.faa $db_dir\/arc.scg.faa $db_dir\/arc.scg.lookup $threads > /dev/null 2>&1
 	fi
-	
+
 	mv $proteins\.scg $ascg
 	rm $proteins\.findSCG.b6 $proteins\.scg.candidates.faa $proteins\.all.b6
 else
