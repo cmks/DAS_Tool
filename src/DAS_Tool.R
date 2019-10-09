@@ -38,14 +38,16 @@ workingdir <- as.character(args[9])
 length_table <- as.character(args[10])
 # 11. write_bin_evals $write_bin_evals
 write_bin_evals <- as.logical(args[11])
-# 12.create_plots $create_plots
-create_plots <- as.logical(args[12])
-# 13.debug $debug
-debug <- as.logical(args[13])
-# 14.b $b
-b <- as.numeric(args[14])
-# 15.c $c
-c <- as.numeric(args[15])
+
+write_unbinned <- as.logical(args[12])
+# 13.create_plots $create_plots
+create_plots <- as.logical(args[13])
+# 14.debug $debug
+debug <- as.logical(args[14])
+# 15.b $b
+b <- as.numeric(args[15])
+# 16.c $c
+c <- as.numeric(args[16])
 
 options(show.error.messages=FALSE)
 
@@ -56,11 +58,11 @@ if(debug){
 }
 
 # check DAS Tool package version:
-if(!packageVersion("DASTool")>=numeric_version("1.1.1")){
-  cat('ERROR: DAS_Tool R-package (version 1.1.1) is not installed\n')
+if(!packageVersion("DASTool")>=numeric_version("1.1.2")){
+  cat('ERROR: DAS_Tool R-package (version 1.1.2) is not installed\n')
   cat('Please install the current version of DAS_Tool using:\n')
   cat('$ cd DAS_Tool_installation_directory\n')
-  cat('$ R CMD INSTALL package/DASTool_1.1.1.tar.gz\n')
+  cat('$ R CMD INSTALL package/DASTool_1.1.2.tar.gz\n')
   cat('Or read the documentation for more detailed instructions\n')
   quit()
 }
@@ -88,6 +90,7 @@ bin_evaluations <- cherry_pick(scaffolds_to_bins=scaffolds_to_bins,
                                length_table=length_table,
                                use_N50=use_Nfifty,
                                write_bin_evals=write_bin_evals,
+                               write_unbinned=write_unbinned,
                                debug=debug)
 
 if(create_plots && class(bin_evaluations)=='list'){

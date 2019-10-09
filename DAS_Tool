@@ -34,7 +34,7 @@ thisdir=$(pwd)
 
 function display_version() {
     echo
-    echo "DAS Tool version 1.1.1"
+    echo "DAS Tool version 1.1.2"
     echo
     exit 1
 }
@@ -42,7 +42,7 @@ function display_version() {
 
 function display_help() {
     echo " "
-    echo "DAS Tool version 1.1.1"
+    echo "DAS Tool version 1.1.2"
     echo " "
     echo "Usage: DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
     echo "                -l methodA,...,methodN -c contigs.fa -o myOutput"
@@ -56,7 +56,7 @@ function display_help() {
     echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
     echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
     echo "   --write_bins               Export bins as fasta files  [0/1]. (default: 0)"
-    echo "   --write_unbinned           Export unbinned contigs as fasta file. Only has an effect when write_bins==1 [0/1]. (default: 0)"
+    echo "   --write_unbinned           Report unbinned contigs. To export as fasta file also set write_bins==1 [0/1]. (default: 0)"
     echo "   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo)."
     echo "                              Gene prediction step will be skipped if given. (optional)"
     echo "   -t, --threads              Number of threads to use. (default: 1)"
@@ -427,7 +427,7 @@ awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $c
 # 4. Run DAS Tool
 #
 cd $DIR
-Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $create_plots $debug $b_weight $c_weight
+Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $write_unbinned $create_plots $debug $b_weight $c_weight
 cd $thisdir
 
 
@@ -439,14 +439,6 @@ cd $thisdir
 if [ "$write_bins" == "TRUE" ]; then
 scaf2bin=$outputbasename\_DASTool_scaffolds2bin.txt
 if test -f $scaf2bin; then
-
-# add unbinned contig names to scaf2bin
-if [ $write_unbinned == "TRUE" ]; then
-grep ">" "$contigs" | tr -d ">" > all_contig_names.txt
-cut -f 1 "$scaf2bin" > DAS_Tool_contig_names.txt
-grep -wf DAS_Tool_contig_names.txt -v all_contig_names.txt | sed 's/$/\tbin.unbinned/g' >> $scaf2bin
-rm all_contig_names.txt DAS_Tool_contig_names.txt
-fi
 
 bin_folder=$outputbasename\_DASTool_bins
 if [ -d "$bin_folder" ]; then
