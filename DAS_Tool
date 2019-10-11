@@ -99,15 +99,14 @@ fi
 if [ $3 = true ]; then
 	echo "${@:5}"
 fi
-
 }
-
 
 
 [ $# -eq 0 ] && { display_help ; exit 1; }
 
 binlabels="NULL"
 contigs="NULL"
+outputbasename=""
 debug=false
 executed_prodigal=0
 resume_scg=0
@@ -212,6 +211,10 @@ if [ "$resume_scg" == "0" ] || [ "$resume_scg" == "false" ] || [ "$resume_scg" =
 resume_scg="FALSE"
 else
 resume_scg="TRUE"
+fi
+if [[ ! "$outputbasename" = *[!\ ]* ]]; then
+  echo "Basename for output files not defined (set using -o, --outputbasename). Aborting."
+  exit 1
 fi
 
 
@@ -318,6 +321,8 @@ fi
 
 write_log $logfile true true $debug "Running DAS Tool using" $threads "threads."
 
+
+
 #
 # 1. Run Prodigal
 #
@@ -414,6 +419,7 @@ if [ $(wc -l < $bscg) -eq 0 ] && [ $(wc -l < $ascg) -eq 0 ]; then
 fi
 
 
+
 #
 # 3. Calculate Contig Length
 #
@@ -435,7 +441,6 @@ cd $thisdir
 #
 # 5. Extract Bins
 #
-
 if [ "$write_bins" == "TRUE" ]; then
 scaf2bin=$outputbasename\_DASTool_scaffolds2bin.txt
 if test -f $scaf2bin; then
