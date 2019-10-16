@@ -460,7 +460,7 @@ done < $scaf2bin
 for i in $bin_folder\/*.ctgtmp
 do
 bin_id=$(echo $i | sed 's/\.ctgtmp//g')
-pullseq -i $contigs -n $i > $bin_id\.contigs.fa
+pullseq -i $contigs -n $i > $bin_id\.fa
 rm $i
 done
 fi
