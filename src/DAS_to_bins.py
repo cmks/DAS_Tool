@@ -40,5 +40,5 @@ for i in dict1:
 				fh.write(str(i) + "\n" + str(dict1[i]) + "\n")
 		else:
 			os.mkdir(filepath)
-			with open(os.path.join(filepath,file_fh, "a")) as fh:
+			with open(os.path.join(filepath,file_fh), "a") as fh:
 				fh.write(str(i) + "\n" + str(dict1[i]) + "\n")
