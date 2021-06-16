@@ -286,15 +286,30 @@ then
   exit 1
 fi
 
-for i in $(echo $scaffoldstobins | tr "," " ")
+# check if any scaffold2bin files are emtpy:
+s2b_tmp=''
+for i in $(echo ${scaffoldstobins} | tr "," " ")
 do
-if [ ! -f $i ];
+scaf2bin_wcl=$(cat ${i} | wc -l)
+if [ "${scaf2bin_wcl}" -eq "0" ]
 then
-  write_log $logfile true true true "scaffolds2bin file not found: $i "
-  write_log $logfile true true true Aborting.
-  exit 1
+  write_log $logfile true true true "Warning: scaffolds2bin file is empty: $i "
+else
+  s2b_tmp=${s2b_tmp},${i}
 fi
 done
+s2b_tmp=${s2b_tmp#","}
+
+# check if all scaffold2bin files are empty:
+if [ "${#s2b_tmp}" -eq "0" ]
+then
+  write_log $logfile true true true "No bins provided. Check contig2bin files."
+  write_log $logfile true true true "Aborting."
+  exit 1
+else
+  scaffoldstobins=${s2b_tmp}
+fi
+
 
 # Existence and permissions of output directory
 if [ ! -d $(dirname "$outputbasename") ]; then
