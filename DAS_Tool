@@ -422,7 +422,7 @@ else
 fi
 
 # Stop if single copy gene prediction failed
-if [ ! -f $bscg ] || [ ! -f $ascg ]; then
+if [ ! -f $bscg ] && [ ! -f $ascg ]; then
 	write_log $logfile true true true "single copy gene prediction using $search_engine failed. Aborting"
 	exit 1
 fi
