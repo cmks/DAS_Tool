@@ -3,7 +3,7 @@
 # 1. Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
-- R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
+- R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4)
 - ruby (>= v2.3.1): https://www.ruby-lang.org
 - Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
@@ -20,11 +20,11 @@
 ## Github
 ```
 # Download and extract DASTool.zip archive:
-unzip DAS_Tool.v1.1.zip
-cd ./DAS_Tool.v1.1
+unzip DAS_Tool-1.x.x.zip
+cd ./DAS_Tool-1.x.x
 
 # Install R-packages:
-R CMD INSTALL ./package/DASTool_1.1.0.tar.gz
+R CMD INSTALL ./package/DASTool_1.x.x.tar.gz
 
 # Unzip SCG database:
 unzip ./db.zip

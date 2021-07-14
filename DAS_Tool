@@ -54,7 +54,6 @@ function display_help() {
     echo "   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch]."
     echo "                              (default: usearch)"
     echo "   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)"
-    echo "   --create_plots             Create binning performance plots [0/1]. (default: 1)"
     echo "   --write_bins               Export bins as fasta files  [0/1]. (default: 0)"
     echo "   --write_unbinned           Report unbinned contigs. To export as fasta file also set write_bins==1 [0/1]. (default: 0)"
     echo "   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo)."
@@ -113,7 +112,6 @@ resume_scg=0
 score_threshold=0.5
 threads=1
 write_bin_evals=1
-create_plots=1
 write_bins=0
 write_unbinned=0
 search_engine="usearch"
@@ -137,9 +135,6 @@ while [ "$1" != "" ]; do
                                 ;;
         --write_bin_evals )     shift
                                 write_bin_evals=$1
-                                ;;
-        --create_plots )        shift
-                                create_plots=$1
                                 ;;
         --write_bins )          shift
                                 write_bins=$1
@@ -201,11 +196,6 @@ if [ "$write_bin_evals" == "0" ] || [ "$write_bin_evals" == "false" ] || [ "$wri
 write_bin_evals="FALSE"
 else
 write_bin_evals="TRUE"
-fi
-if [ "$create_plots" == "0" ] || [ "$create_plots" == "false" ] || [ "$create_plots" == "False" ] || [ "$create_plots" == "f" ]; then
-create_plots="FALSE"
-else
-create_plots="TRUE"
 fi
 if [ "$resume_scg" == "0" ] || [ "$resume_scg" == "false" ] || [ "$resume_scg" == "False" ] || [ "$resume_scg" == "f" ]; then
 resume_scg="FALSE"
@@ -448,7 +438,7 @@ awk '/^>/ {if (x){print x}; print ;x=0;next; } {x += length($0)}END{print x}' $c
 # 4. Run DAS Tool
 #
 cd $DIR
-Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $write_unbinned $create_plots $debug $b_weight $c_weight
+Rscript $DIR\/src/DAS_Tool.R $scaffoldstobins $binlabels $contigs $bscg $ascg $outputbasename $score_threshold $threads $thisdir $length_table $write_bin_evals $write_unbinned $debug $b_weight $c_weight
 cd $thisdir
 
 

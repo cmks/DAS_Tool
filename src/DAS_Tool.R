@@ -7,7 +7,7 @@
 # Please cite https://doi.org/10.1101/107789
 #
 
-packages <- list('doMC','data.table','ggplot2','DASTool')
+packages <- list('doMC','data.table','DASTool')
 foo <- lapply(packages,function(x){suppressPackageStartupMessages(library(x,character.only=TRUE))})
 
 #disable warnings:
@@ -38,16 +38,14 @@ workingdir <- as.character(args[9])
 length_table <- as.character(args[10])
 # 11. write_bin_evals $write_bin_evals
 write_bin_evals <- as.logical(args[11])
-
+# 12. write_unbinned
 write_unbinned <- as.logical(args[12])
-# 13.create_plots $create_plots
-create_plots <- as.logical(args[13])
-# 14.debug $debug
-debug <- as.logical(args[14])
-# 15.b $b
-b <- as.numeric(args[15])
-# 16.c $c
-c <- as.numeric(args[16])
+# 13.debug $debug
+debug <- as.logical(args[13])
+# 14.b $b
+b <- as.numeric(args[14])
+# 15.c $c
+c <- as.numeric(args[15])
 
 options(show.error.messages=FALSE)
 
@@ -92,8 +90,4 @@ bin_evaluations <- cherry_pick(scaffolds_to_bins=scaffolds_to_bins,
                                write_bin_evals=write_bin_evals,
                                write_unbinned=write_unbinned,
                                debug=debug)
-
-if(create_plots && class(bin_evaluations)=='list'){
-  DER_Plot(bin_evaluations,output_basename)
-}
 

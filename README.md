@@ -108,7 +108,7 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 # Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
-- R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
+- R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4)
 - ruby (>= v2.3.1): https://www.ruby-lang.org
 - Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
@@ -145,7 +145,6 @@ $ R
 > repo='http://cran.us.r-project.org' #select a repository
 > install.packages('doMC', repos=repo, dependencies = T)
 > install.packages('data.table', repos=repo, dependencies = T)
-> install.packages('ggplot2', repos=repo, dependencies = T)
 > q() #quit R-session
 ```
 
