@@ -1,6 +1,6 @@
 #
 # DAS Tool for genome-resolved metagenomics
-# by Christian MK Sieber (csieber@lbl.gov)
+# by Christian MK Sieber (cmksieber@gmail.com)
 #
 # Please use DAS_Tool.sh in your installation folder to run DAS Tool.
 # DAS Tool is available at https://github.com/cmks/DAS_Tool
@@ -56,12 +56,12 @@ if(debug){
 }
 
 # check DAS Tool package version:
-if(!packageVersion("DASTool")>=numeric_version("1.1.2")){
-  cat('ERROR: DAS_Tool R-package (version 1.1.2) is not installed\n')
+if(!packageVersion("DASTool")>=numeric_version("1.1.3")){
+  cat('ERROR: DAS_Tool R-package (version 1.1.3) is not installed\n')
   cat('Please install the current version of DAS_Tool using:\n')
   cat('$ cd DAS_Tool_installation_directory\n')
-  cat('$ R CMD INSTALL package/DASTool_1.1.2.tar.gz\n')
-  cat('Or read the documentation for more detailed instructions\n')
+  cat('$ R CMD INSTALL package/DASTool_1.1.3.tar.gz\n')
+  cat('or read the documentation for more detailed instructions\n')
   quit()
 }
 

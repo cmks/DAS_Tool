@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # DAS Tool for genome-resolved metagenomics
-# by Christian MK Sieber (csieber@lbl.gov)
+# by Christian MK Sieber (cmksieber@gmail.com)
 #
 #
 # DAS Tool Copyright (c) 2017, The Regents of the University of California, through Lawrence
@@ -34,7 +34,7 @@ thisdir=$(pwd)
 
 function display_version() {
     echo
-    echo "DAS Tool version 1.1.2"
+    echo "DAS Tool version 1.1.3"
     echo
     exit 1
 }
@@ -42,7 +42,7 @@ function display_version() {
 
 function display_help() {
     echo " "
-    echo "DAS Tool version 1.1.2"
+    echo "DAS Tool version 1.1.3"
     echo " "
     echo "Usage: DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin"
     echo "                -l methodA,...,methodN -c contigs.fa -o myOutput"
