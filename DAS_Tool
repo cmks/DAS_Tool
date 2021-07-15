@@ -136,6 +136,9 @@ while [ "$1" != "" ]; do
         --write_bin_evals )     shift
                                 write_bin_evals=$1
                                 ;;
+        --create_plots )        shift
+                                echo "WARNING: --create_plots feature is no longer supported and will be removed in future versions."
+                                ;;
         --write_bins )          shift
                                 write_bins=$1
                                 ;;
