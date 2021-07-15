@@ -276,6 +276,13 @@ then
   exit 1
 fi
 
+if [ "${contigs: -3}" == ".gz" ]
+then
+  write_log $logfile true true true Gzip compressed fasta files not supported. Please extract: $contigs
+  write_log $logfile true true true Aborting.
+  exit 1
+fi
+
 # check if any scaffold2bin files are emtpy:
 s2b_tmp=''
 for i in $(echo ${scaffoldstobins} | tr "," " ")
