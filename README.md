@@ -11,65 +11,61 @@ Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, M
 # Usage
 
 ```
-DAS_Tool -i methodA.scaffolds2bin,...,methodN.scaffolds2bin
-         -l methodA,...,methodN -c contigs.fa -o myOutput
+DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
 
-   -i, --bins                 Comma separated list of tab separated scaffolds to bin tables.
-   -c, --contigs              Contigs in fasta format.
-   -o, --outputbasename       Basename of output files.
-   -l, --labels               Comma separated list of binning prediction names. (optional)
-   --search_engine            Engine used for single copy gene identification [blast/diamond/usearch].
-                              (default: usearch)
-   --write_bin_evals          Write evaluation for each input bin set [0/1]. (default: 1)
-   --create_plots             Create binning performance plots [0/1]. (default: 1)
-   --write_bins               Export bins as fasta files  [0/1]. (default: 0)
-   --proteins                 Predicted proteins in prodigal fasta format (>scaffoldID_geneNo).
-                              Gene prediction step will be skipped if given. (optional)
-   --score_threshold          Score threshold until selection algorithm will keep selecting bins [0..1].
-                              (default: 0.5)
-   --duplicate_penalty        Penalty for duplicate single copy genes per bin (weight b).
-                              Only change if you know what you're doing. [0..3]
-                              (default: 0.6)
-   --megabin_penalty          Penalty for megabins (weight c). Only change if you know what you're doing. [0..3]
-                              (default: 0.5)
-   --db_directory             Directory of single copy gene database. (default: install_dir/db)
-   --resume                   Use existing predicted single copy gene files from a previous run [0/1]. (default: 0)
-   --debug                    Write debug information to log file.
-   -t, --threads              Number of threads to use. (default: 1)
-   -v, --version              Print version number and exit.
-   -h, --help                 Show this message.
+Options:
+ -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
+ -c --contigs=<contigs>                   Contigs in fasta format.
+ -o --outputbasename=<outputbasename>     Basename of output files.
+ -l --labels=<labels>                     Comma separated list of binning prediction names.
+ --search_engine=<search_engine>          Engine used for single copy gene identification (blast/diamond/usearch) [default: diamond].
+ -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
+                                          Gene prediction step will be skipped.
+ --write_bin_evals                        Write evaluation of input bin sets.
+ --write_bins                             Export bins as fasta files.
+ --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
+ -t --threads=<threads>                   Number of threads to use [default: 1].
+ --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
+ --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
+                                          Only change if you know what you are doing (0..3) [default: 0.6].
+ --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
+ --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
+ --resume                                 Use existing predicted single copy gene files from a previous run.
+ --debug                                  Write debug information to log file.
+ -v --version                             Print version number and exit.
+ -h --help                                Show this.
 
 ```
 
 
 ### Input file format
-- Bins [\--bins, -i]: Tab separated files of scaffold-IDs and bin-IDs.
-Scaffolds to bin file example:
+- Bins [\--bins, -i]: Tab separated files of contig-IDs and bin-IDs.
+Contigs to bin file example:
 ```
-Scaffold_1	bin.01
-Scaffold_8	bin.01
-Scaffold_42	bin.02
-Scaffold_49	bin.03
+Contig_1	bin.01
+Contig_8	bin.01
+Contig_42	bin.02
+Contig_49	bin.03
 ```
 - Contigs [\--contigs, -c]: Assembled contigs in fasta format:
 ```
->Scaffold_1
+>Contig_1
 ATCATCGTCCGCATCGACGAATTCGGCGAACGAGTACCCCTGACCATCTCCGATTA...
->Scaffold_2
+>Contig_2
 GATCGTCACGCAGGCTATCGGAGCCTCGACCCGCAAGCTCTGCGCCTTGGAGCAGG...
 ```
 
-- Proteins (optional) [\--proteins]: Predicted proteins in prodigal fasta format. Header contains scaffold-ID and gene number:
+- Proteins (optional) [\--proteins]: Predicted proteins in prodigal fasta format. Header contains contig-ID and gene number:
 ```
->Scaffold_1_1
+>Contig_1_1
 MPRKNKKLPRHLLVIRTSAMGDVAMLPHALRALKEAYPEVKVTVATKSLFHPFFEG...
->Scaffold_1_2
+>Contig_1_2
 MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 ```
 
 ### Output files
 - Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
-- Scaffolds to bin file of output bins (DASTool_scaffolds2bin.txt).
+- Contigs to bin file of output bins (DASTool_contigs2bin.txt).
 - Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
 - Plots showing the amount of high quality bins and score distribution of bins per method, if ```--create_plots 1``` is set (DASTool_hqBins.pdf, DASTool_scores.pdf).
 - Bins in fasta format if ```--write_bins 1``` is set (DASTool_bins).
@@ -80,26 +76,26 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 **Example 1:**  Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix *DASToolRun1*:
 ```
-$ ./DAS_Tool  -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
-                 sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,
-                 sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,
-                 sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv
+$ ./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                 sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                 sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                 sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
               -l concoct,maxbin,metabat,tetraESOM
               -c sample_data/sample.human.gut_contigs.fa
               -o sample_output/DASToolRun1
 ```
 
-**Example 2:** Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step, disable writing of bin evaluations, set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix *DASToolRun2*:
+**Example 2:** Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step, output evaluations of input bins, set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix *DASToolRun2*:
 ```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,
-                sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
              -l concoct,maxbin,metabat,tetraESOM
              -c sample_data/sample.human.gut_contigs.fa
              -o sample_output/DASToolRun2
              --proteins sample_output/DASToolRun1_proteins.faa
-             --write_bin_evals 0
+             --write_bin_evals
              --threads 2
              --score_threshold 0.6
 ```
@@ -108,15 +104,15 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 # Dependencies
 
 - R (>= 3.2.3): https://www.r-project.org
-- R-packages: data.table (>= 1.9.6), doMC (>= 1.3.4), ggplot2 (>= 2.1.0)
+- R-packages: data.table (>= 1.9.6), magrittr (>= 2.0.1), docopt (>= 0.7.1)
 - ruby (>= v2.3.1): https://www.ruby-lang.org
 - Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
 - Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
-	- USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
   - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
 	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
+  - USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
 
 \*) The free version of USEARCH only can use up to 4Gb RAM. Therefore, the use of DIAMOND or BLAST+ is recommended for big datasets.
 
@@ -127,9 +123,6 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,
 # Download and extract DASTool.zip archive:
 unzip DAS_Tool-1.x.x.zip
 cd ./DAS_Tool-1.x.x
-
-# Install R-packages:
-R CMD INSTALL ./package/DASTool_1.x.x.tar.gz
 
 # Unzip SCG database:
 unzip ./db.zip -d db
@@ -143,23 +136,11 @@ Installation of dependent R-packages:
 ```
 $ R
 > repo='http://cran.us.r-project.org' #select a repository
-> install.packages('doMC', repos=repo, dependencies = T)
 > install.packages('data.table', repos=repo, dependencies = T)
-> install.packages('ggplot2', repos=repo, dependencies = T)
+> install.packages('magrittr', repos=repo, dependencies = T)
+> install.packages('docopt', repos=repo, dependencies = T)
 > q() #quit R-session
 ```
-
-After installing all dependent R-packages, the DAS Tool R-functions can be installed in a bash terminal:
-```
-$ R CMD INSTALL ./package/DASTool_1.x.x.tar.gz
-```
-...or in an R-session:
-```
-$ R
-> install.packages('package/DASTool_1.x.x.tar.gz')
-> q() #quit R-session
-```
-
 
 # Installation using conda or homebrew
 DAS Tool now can also be installed via bioconda and homebrew.
@@ -191,27 +172,27 @@ brew install brewsci/bio/das_tool
 
 # Preparation of input files
 
-Not all binning tools provide results in a tab separated file of scaffold-IDs and bin-IDs. A helper script can be used to convert a set of bins in fasta format to tabular scaffolds2bin file, which can be used as input for DAS Tool: `src/Fasta_to_Scaffolds2Bin.sh -h`.
+Not all binning tools provide results in a tab separated file of contig-IDs and bin-IDs. A helper script can be used to convert a set of bins in fasta format to tabular contigs2bin file, which can be used as input for DAS Tool: `src/Fasta_to_Contigs2Bin.sh -h`.
 
 ### Usage:
 ```
-Fasta_to_Scaffolds2Bin: Converts genome bins in fasta format to scaffolds-to-bin table.
+Fasta_to_Contigs2Bin: Converts genome bins in fasta format to contigs-to-bin table.
 
-Usage: Fasta_to_Scaffolds2Bin.sh -e fasta > my_scaffolds2bin.tsv
+Usage: Fasta_to_Contigs2Bin.sh -e fasta > my_contigs2bin.tsv
 
    -e, --extension            Extension of fasta files. (default: fasta)
    -i, --input_folder         Folder with bins in fasta format. (default: ./)
    -h, --help                 Show this message.
 ```
 
-### Example: Converting MaxBin fasta output into tab separated scaffolds2bin file:
+### Example: Converting MaxBin fasta output into tab separated contigs2bin file:
 ```
 $ ls /maxbin/output/folder
 maxbin.001.fasta   maxbin.002.fasta   maxbin.003.fasta...
 
-$ src/Fasta_to_Scaffolds2Bin.sh -i /maxbin/output/folder -e fasta > maxbin.scaffolds2bin.tsv
+$ src/Fasta_to_Contigs2Bin.sh -i /maxbin/output/folder -e fasta > maxbin.contigs2bin.tsv
 
-$ head gut_maxbin2_scaffolds2bin.tsv
+$ head gut_maxbin2_contigs2bin.tsv
 NODE_10_length_127450_cov_375.783524	maxbin.001
 NODE_27_length_95143_cov_427.155298	maxbin.001
 NODE_51_length_78315_cov_504.322425	maxbin.001
@@ -219,18 +200,18 @@ NODE_84_length_66931_cov_376.684775	maxbin.001
 NODE_87_length_65653_cov_460.202156	maxbin.001
 ```
 
-Some binning tools (such as CONCOCT) provide a comma separated tabular output. To convert a comma separated file into a tab separated file a one liner can be used: `perl -pe "s/,/\t/g;" scaffolds2bin.csv > scaffolds2bin.tsv`.
+Some binning tools (such as CONCOCT) provide a comma separated tabular output. To convert a comma separated file into a tab separated file a one liner can be used: `perl -pe "s/,/\t/g;" contigs2bin.csv > contigs2bin.tsv`.
 
-### Example: Converting CONCOCT csv output into tab separated scaffolds2bin file:
+### Example: Converting CONCOCT csv output into tab separated contigs2bin file:
 ```
 $ head concoct_clustering_gt1000.csv
 NODE_2_length_147519_cov_33.166976,42
 NODE_3_length_141012_cov_38.678171,42
 NODE_4_length_139685_cov_35.741896,42
 
-$ perl -pe "s/,/\tconcoct./g;" concoct_clustering_gt1000.csv > concoct.scaffolds2bin.tsv
+$ perl -pe "s/,/\tconcoct./g;" concoct_clustering_gt1000.csv > concoct.contigs2bin.tsv
 
-$ head concoct.scaffolds2bin.tsv
+$ head concoct.contigs2bin.tsv
 NODE_2_length_147519_cov_33.166976	concoct.42
 NODE_3_length_141012_cov_38.678171	concoct.42
 NODE_4_length_139685_cov_35.741896	concoct.42

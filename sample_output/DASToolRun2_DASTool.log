@@ -1,0 +1,37 @@
+DAS Tool 1.1
+
+
+Parameters: 
+--bins	sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv
+--contigs	sample_data/sample.human.gut_contigs.fa
+--outputbasename	sample_output/DASToolRun2
+--labels	concoct,maxbin,metabat,tetraESOM
+--search_engine	diamond
+--proteins	sample_output/DASToolRun1_proteins.faa
+--write_bin_evals	TRUE
+--write_bins	FALSE
+--write_unbinned	FALSE
+--threads	2
+--score_threshold	0.6
+--duplicate_penalty	0.6
+--megabin_penalty	0.5
+--dbDirectory	db
+--resume	FALSE
+--debug	FALSE
+--version	FALSE
+--help	FALSE
+--create_plots	FALSE
+
+
+Dependencies: 
+prodigal	/usr/bin/prodigal
+diamond	/usr/bin/diamond
+pullseq	/usr/bin/pullseq
+ruby	/usr/bin/ruby
+usearch	
+blastp	
+
+Analyzing assembly 
+Skipping gene prediction, using protein fasta file: sample_output/DASToolRun1_proteins.faa 
+Annotating single copy genes 
+Dereplicating, aggregating, and scoring bins 
