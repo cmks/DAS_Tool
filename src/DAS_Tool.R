@@ -32,6 +32,9 @@ Options:
                                             Only change if you know what you are doing (0..3) [default: 0.6].
    --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
    --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
+   --customDbDir=<customDbDir>              Directory of custom single copy gene database(s). One directory per set. Multiple sets can be comma separated.
+   --useCustomDbOnly                        Only use custom single copy gene database(s).
+   --customDbFormat                         Format of custom single copy gene database(s) [default: anvio].
    --resume                                 Use existing predicted single copy gene files from a previous run.
    --debug                                  Write debug information to log file.
    -v --version                             Print version number and exit.
@@ -53,6 +56,7 @@ if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
 suppressMessages(suppressWarnings(library(data.table, warn.conflicts = F, quietly = T)))
 suppressMessages(suppressWarnings(library(magrittr, warn.conflicts = F, quietly = T)))
 suppressMessages(suppressWarnings(library(docopt, warn.conflicts = F, quietly = T)))
+suppressMessages(suppressWarnings(library(rhmmer, warn.conflicts = F, quietly = T)))
 
 cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,write_unbinned,write_bin_evals){
    
@@ -482,6 +486,7 @@ if(!is.null(arguments$proteins)){
 }
 
 # Identify single copy genes
+scgTab <- data.table()
 ## Predict bacterial SCGs
 write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
 system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
@@ -520,6 +525,53 @@ if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins
                             .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                             .[,protein_set_size:=38])
    stopifnot(nrow(scgTab)>0)
+}
+
+
+# Identify custom single copy genes
+if(!is.null(arguments$customDbDir)){
+   
+   customSets <- unlist(strsplit(arguments$customDbDir,','))
+   customSets <- unlist(strsplit(customDbDir,','))
+   if(any(duplicated(basename(customSets)))){
+      write.log('Custom SCG set directory names are not unique', 
+                filename = logFile,append = T,write_to_file = T,type = 'error')
+   }
+   
+   for(scgSet in customSets){
+      # TODO: check if all files are present, hmms are extracted, hmmpress was applied
+      
+      # scgSet <- customSets[1]
+      setName <- basename(scgSet)
+      
+      # determine set size
+      scgSetSize <- fread(paste0(scgSet,'/genes.txt'),header = T,sep='\t') %>% 
+         nrow()
+      
+      # determine noise cutoff
+      scgNoiseCutoff <- fread(paste0(scgSet,'/noise_cutoff_terms.txt'),header = F,sep='\t')$V1
+      
+      # run HMMER on custom set
+      hmmscan_out <- paste0(arguments$outputbasename,'_',setName,'_hmmscan.tblout')
+      system(paste0('hmmscan --tblout ', hmmscan_out ,' ',scgNoiseCutoff,' --cpu ',arguments$threads,' "',
+                    scgSet,'/genes.hmm ','" "',proteins,'">/dev/null 2>&1'))
+      
+      # parse HMMER result
+      # TODO: account for empty hmmscan results
+      hmmscan_tab <- read_tblout(hmmscan_out) %>%
+         data.table() %>% 
+         setnames(old = c('domain_name','query_name'),new=c('protein_name','protein_id')) %>% 
+         .[.[, .I[which.min(sequence_evalue)], by=protein_id]$V1]
+      scgTab <- rbind(scgTab,
+                      hmmscan_tab[,.(protein_id,
+                                     protein_name,
+                                     protein_set=setName,
+                                     contig_id=gsub('_[0-9]+$','',protein_id),
+                                     protein_set_size=scgSetSize)])
+      
+   }
+   
+   
 }
 
 
