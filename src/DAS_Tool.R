@@ -4,8 +4,6 @@
 # DAS Tool for genome-resolved metagenomics
 # by Christian MK Sieber (cmksieber@gmail.com)
 #
-# Please use DAS_Tool.sh in your installation folder to run DAS Tool.
-# DAS Tool is availabel at https://github.com/cmks/DAS_Tool
 # Please cite https://doi.org/10.1101/107789
 #
 
