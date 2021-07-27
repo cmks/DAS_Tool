@@ -11,7 +11,7 @@ doc <- "DAS Tool
 
 Usage:
   DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
-  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--write_bin_evals] [--create_plots] [--write_bins] [--write_unbinned] [--resume] [--debug]
+  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--useCustomDbOnly] [--customDbFormat] [--customDbDir=<customDbDir>] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--write_bin_evals] [--create_plots] [--write_bins] [--write_unbinned] [--resume] [--debug]
   DAS_Tool [--version]
   DAS_Tool [--help]
 
@@ -294,7 +294,7 @@ if(!tolower(arguments$search_engine) %in% c('diamond', 'usearch', 'blastp')){
 }
 
 # Check dependencies
-dependencies <- Sys.which(c("prodigal", "diamond", "pullseq", "ruby", "usearch", "blastp")) %>% 
+dependencies <- Sys.which(c("prodigal", "diamond", "pullseq", "ruby", "usearch", "blastp","hmmscan","hmmpress","gunzip")) %>% 
    data.table(dependency=names(.),path=.)
 
 min_dependencies <- c("pullseq", "ruby",searchEngine)
@@ -306,6 +306,13 @@ if(any(dependencies[ path == '', dependency ] %in% min_dependencies)){
    
    write.log(paste0('Cannot find dependencies: ', 
                     paste0(dependencies[ path == '', dependency ],collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
+}
+
+## Check dependencies for custom SCGs
+if(!is.null(arguments$customDbDir) && any(dependencies[ path == '', dependency ] %in% c('hmmpress','hmmscan'))){
+   not_found <- dependencies[ path == '' & dependency %in% c('hmmpress','hmmscan'), dependency ]
+   write.log(paste0('Cannot find dependencies: ', 
+                    paste0(not_found,collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
 }
 
 write.log('\nDependencies:',filename = logFile,append = T,write_to_file = T)
@@ -487,44 +494,46 @@ if(!is.null(arguments$proteins)){
 
 # Identify single copy genes
 scgTab <- data.table()
-## Predict bacterial SCGs
-write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
-system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
-              searchEngine,' ',
-              proteins,' ',
-              dbDirectory,'/bac.all.faa ',
-              dbDirectory,'/bac.scg.faa ',
-              dbDirectory,'/bac.scg.lookup ',
-              threads,
-              ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-system(paste0('mv ',proteins,'.scg ',proteins,'.bacteria.scg'))
-
-## Predict archaeal SCGs
-system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
-              searchEngine,' ',
-              proteins,' ',
-              dbDirectory,'/arc.all.faa ',
-              dbDirectory,'/arc.scg.faa ',
-              dbDirectory,'/arc.scg.lookup ',
-              threads,
-              ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-system(paste0('mv ',proteins,'.scg ',proteins,'.archaea.scg'))
-
-## Stop if no single copy genes were predicted:
-if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins,'.archaea.scg')) == 0){
-   write.log('No single copy genes predicted', 
-             filename = logFile,append = T,write_to_file = T,type = 'error')
-   # stop('No single copy genes predicted')
-}else{
-   scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
-                            .[,protein_set:='bacteria'] %>% 
-                            .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
-                            .[,protein_set_size:=51],
-                   fread(paste0(proteins,'.archaea.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
-                            .[,protein_set:='.archaea'] %>% 
-                            .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
-                            .[,protein_set_size:=38])
-   stopifnot(nrow(scgTab)>0)
+if(!arguments$useCustomDbOnly){
+   ## Predict bacterial SCGs
+   write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
+                 searchEngine,' ',
+                 proteins,' ',
+                 dbDirectory,'/bac.all.faa ',
+                 dbDirectory,'/bac.scg.faa ',
+                 dbDirectory,'/bac.scg.lookup ',
+                 threads,
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+   system(paste0('mv ',proteins,'.scg ',proteins,'.bacteria.scg'))
+   
+   ## Predict archaeal SCGs
+   system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
+                 searchEngine,' ',
+                 proteins,' ',
+                 dbDirectory,'/arc.all.faa ',
+                 dbDirectory,'/arc.scg.faa ',
+                 dbDirectory,'/arc.scg.lookup ',
+                 threads,
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+   system(paste0('mv ',proteins,'.scg ',proteins,'.archaea.scg'))
+   
+   ## Stop if no single copy genes were predicted:
+   if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins,'.archaea.scg')) == 0){
+      write.log('No single copy genes predicted', 
+                filename = logFile,append = T,write_to_file = T,type = 'error')
+      # stop('No single copy genes predicted')
+   }else{
+      scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
+                               .[,protein_set:='bacteria'] %>% 
+                               .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
+                               .[,protein_set_size:=51],
+                      fread(paste0(proteins,'.archaea.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
+                               .[,protein_set:='.archaea'] %>% 
+                               .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
+                               .[,protein_set_size:=38])
+      # stopifnot(nrow(scgTab)>0)
+   }
 }
 
 
@@ -532,7 +541,7 @@ if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins
 if(!is.null(arguments$customDbDir)){
    
    customSets <- unlist(strsplit(arguments$customDbDir,','))
-   customSets <- unlist(strsplit(customDbDir,','))
+   # customSets <- unlist(strsplit(customDbDir,','))
    if(any(duplicated(basename(customSets)))){
       write.log('Custom SCG set directory names are not unique', 
                 filename = logFile,append = T,write_to_file = T,type = 'error')
@@ -541,37 +550,79 @@ if(!is.null(arguments$customDbDir)){
    for(scgSet in customSets){
       # TODO: check if all files are present, hmms are extracted, hmmpress was applied
       
+      ## genes.hmm
+      if(!file.exists(paste0(scgSet,'/genes.hmm'))){
+         if(file.exists(paste0(scgSet,'/genes.hmm.gz'))){
+            write.log(paste0('File not found: ',scgSet,'/genes.hmm','\n\t extracting: ',scgSet,'/genes.hmm.gz'),
+                      filename = logFile,append = T,write_to_file = T,type = 'cat')
+            system(paste0('gunzip ',scgSet,'/genes.hmm.gz'))
+         }else{
+            write.log(paste0('Marker gene HMM file not found: ',paste0(scgSet,'/genes.hmm')), 
+                      filename = logFile,append = T,write_to_file = T,type = 'error')
+         }
+      }
+      
+      ## genes.hmm.h3m (hmmpress)
+      if(!file.exists(paste0(scgSet,'/genes.hmm.h3m'))){
+         hmmpress_command <- paste0('hmmpress ',scgSet,'/genes.hmm')
+         write.log(paste0('File not found: ',scgSet,'/genes.hmm.h3m','\n\t running: ',hmmpress_command),
+                   filename = logFile,append = T,write_to_file = T,type = 'cat')
+         system(hmmpress_command)
+      }
+      
       # scgSet <- customSets[1]
       setName <- basename(scgSet)
       
       # determine set size
+      if(!file.exists(paste0(scgSet,'/genes.txt'))){
+         write.log(paste0('Marker gene table file not found: ',paste0(scgSet,'/genes.txt')), 
+                   filename = logFile,append = T,write_to_file = T,type = 'error')
+      }
       scgSetSize <- fread(paste0(scgSet,'/genes.txt'),header = T,sep='\t') %>% 
          nrow()
       
       # determine noise cutoff
+      if(!file.exists(paste0(scgSet,'/noise_cutoff_terms.txt'))){
+         write.log(paste0('Noise cutoff file not found: ',scgSet,'/noise_cutoff_terms.txt'), 
+                   filename = logFile,append = T,write_to_file = T,type = 'error')
+      }
       scgNoiseCutoff <- fread(paste0(scgSet,'/noise_cutoff_terms.txt'),header = F,sep='\t')$V1
       
       # run HMMER on custom set
       hmmscan_out <- paste0(arguments$outputbasename,'_',setName,'_hmmscan.tblout')
-      system(paste0('hmmscan --tblout ', hmmscan_out ,' ',scgNoiseCutoff,' --cpu ',arguments$threads,' "',
-                    scgSet,'/genes.hmm ','" "',proteins,'">/dev/null 2>&1'))
+      hmmscan_command <- paste0('hmmscan --tblout "', hmmscan_out ,'" ',scgNoiseCutoff,' --cpu ',arguments$threads,' "',
+                                scgSet,'/genes.hmm','" "',proteins,'"', ifelse(arguments$debug,' > /dev/null 2>&1',''))
+      if(!arguments$resume || !file.exists(hmmscan_out)){
+         system(hmmscan_command)
+      }else{
+         write.log(paste0('Skipping HMMER run for SCG set: ',scgSet,'\n\t using ',hmmscan_out),
+                   filename = logFile,append = T,write_to_file = T,type = 'cat')
+      }
+      # system(paste0('hmmscan --tblout ', hmmscan_out ,' ',scgNoiseCutoff,' --cpu ',arguments$threads,' "',
+      #               scgSet,'/genes.hmm ','" "',proteins,'">/dev/null 2>&1'))
       
       # parse HMMER result
       # TODO: account for empty hmmscan results
       hmmscan_tab <- read_tblout(hmmscan_out) %>%
-         data.table() %>% 
-         setnames(old = c('domain_name','query_name'),new=c('protein_name','protein_id')) %>% 
-         .[.[, .I[which.min(sequence_evalue)], by=protein_id]$V1]
-      scgTab <- rbind(scgTab,
-                      hmmscan_tab[,.(protein_id,
-                                     protein_name,
-                                     protein_set=setName,
-                                     contig_id=gsub('_[0-9]+$','',protein_id),
-                                     protein_set_size=scgSetSize)])
+         data.table() 
+      if(nrow(hmmscan_tab)>0){
+         hmmscan_tab <- hmmscan_tab %>% 
+            setnames(old = c('domain_name','query_name'),new=c('protein_name','protein_id')) %>% 
+            .[.[, .I[which.min(sequence_evalue)], by=protein_id]$V1]
+         scgTab <- rbind(scgTab,
+                         hmmscan_tab[,.(protein_id,
+                                        protein_name,
+                                        protein_set=setName,
+                                        contig_id=gsub('_[0-9]+$','',protein_id),
+                                        protein_set_size=scgSetSize)])
+      }
       
    }
-   
-   
+}
+
+if(nrow(scgTab) == 0){
+   write.log('No single copy genes predicted', 
+             filename = logFile,append = T,write_to_file = T,type = 'error')
 }
 
 
