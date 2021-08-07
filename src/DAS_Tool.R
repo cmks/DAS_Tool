@@ -235,21 +235,19 @@ exit <- function() {
    invokeRestart("abort") 
 } 
 
-write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
-   
+write.log <- function(message,append=T,filename,type='none',echo=T){
    if( 'character' %in% class(message)){
-      if(write_to_file){
+      if(type == 'cat'){
+         if(echo){cat(message,'\n')}
          cat(message,'\n',file=filename,sep=' ',append = append)
       }
-      if(type == 'cat'){
-         cat(message,'\n')
-      }
       if(type == 'warning'){
-         cat('Warning: ',message,'\n')
-         # warning(paste0(message,'\n'))
+         if(echo){cat('Warning: ',message,'\n')}
+         cat('Warning: ',message,'\n',file=filename,sep=' ',append = append)
       }
       if(type == 'stop'){
-         cat('Error: ',message,'\n')
+         if(echo){cat('Error: ',message,'\n')}
+         cat('Error: ',message,'\n',file=filename,sep=' ',append = append)
          exit()
       }
    }else if("data.frame" %in% class(message)){
@@ -258,11 +256,32 @@ write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
    }
 }
 
+# modified version of the `read_tblout` function of the `rhmmer` package by Zebulun Arendsee (https://github.com/arendsee/rhmmer)
+read_tblout_quietly <- function(file){
+   col_types <- readr::cols(domain_name = readr::col_character(), domain_accession = readr::col_character(), 
+                  query_name = readr::col_character(), query_accession = readr::col_character(), 
+                  sequence_evalue = readr::col_double(), sequence_score = readr::col_double(), 
+                  sequence_bias = readr::col_double(), best_domain_evalue = readr::col_double(), 
+                  best_domain_score = readr::col_double(), best_domain_bis = readr::col_double(), 
+                  domain_number_exp = readr::col_double(), domain_number_reg = readr::col_integer(), 
+                  domain_number_clu = readr::col_integer(), domain_number_ov = readr::col_integer(), 
+                  domain_number_env = readr::col_integer(), domain_number_dom = readr::col_integer(), 
+                  domain_number_rep = readr::col_integer(), domain_number_inc = readr::col_character(), 
+                  description = readr::col_character())
+   
+   N <- length(col_types$cols)
+   readr::read_lines(file, progress = F) %>% 
+      sub(pattern = sprintf("(%s) *(.*)",paste0(rep("\\S+", N - 1), collapse = " +")), replacement = "\\1\t\\2", perl = TRUE) %>%
+      paste0(collapse = "\n") %>% 
+      readr::read_tsv(col_names = c("X","description"), comment = "#", na = "-",show_col_types = F, progress = F) %>%
+      tidyr::separate(.data$X,head(names(col_types$cols), -1), sep = " +") %>% 
+      readr::type_convert(col_types = col_types)
+}
 
 ##
 ## Run DAS Tool
 ##
-version <- 'DAS Tool 1.1.4\n'
+version <- 'DAS Tool 1.2a\n'
 
 arguments <- docopt(doc, version = version)
 # print(arguments)
@@ -270,15 +289,15 @@ arguments <- docopt(doc, version = version)
 # Init log file
 logFile <- paste0(arguments$outputbasename,'_DASTool.log')
 cat('\n')
-write.log(version,filename = logFile,append = F,write_to_file = T,type = 'cat')
+write.log(version,filename = logFile,append = F,type = 'cat')
 
 
-write.log(paste(Sys.time()),filename = logFile,append = T,write_to_file = T)
+write.log(paste(Sys.time()),filename = logFile)
 
-write.log('\nParameters:',filename = logFile,append = T,write_to_file = T)
+write.log('\nParameters:',filename = logFile)
 argsTab <- data.table(opt=names(arguments),args=arguments) %>% 
    .[grepl('^--',opt)]
-write.log(argsTab,filename = logFile,append = T,write_to_file = T)
+write.log(argsTab,filename = logFile)
 
 
 threads <- max(1,as.numeric(arguments$threads))
@@ -287,7 +306,7 @@ threads <- max(1,as.numeric(arguments$threads))
 ## search engine %in% diamond, usearch, blastp?
 if(!tolower(arguments$search_engine) %in% c('diamond', 'usearch', 'blastp')){
    write.log(paste0('Unknown argument for --search_engine: ',arguments$search_engine,'\n',
-                    'Defaulting to diamond'),filename = logFile,append = T,write_to_file = T,type = 'warning')
+                    'Defaulting to diamond'),filename = logFile,type = 'warning')
    searchEngine <- 'diamond'
 }else{
    searchEngine <- tolower(arguments$search_engine)
@@ -305,18 +324,18 @@ if(is.null(arguments$proteins)){
 if(any(dependencies[ path == '', dependency ] %in% min_dependencies)){
    
    write.log(paste0('Cannot find dependencies: ', 
-                    paste0(dependencies[ path == '', dependency ],collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
+                    paste0(dependencies[ path == '', dependency ],collapse = ', ')),filename = logFile,type = 'stop')
 }
 
 ## Check dependencies for custom SCGs
 if(!is.null(arguments$customDbDir) && any(dependencies[ path == '', dependency ] %in% c('hmmpress','hmmscan'))){
    not_found <- dependencies[ path == '' & dependency %in% c('hmmpress','hmmscan'), dependency ]
    write.log(paste0('Cannot find dependencies: ', 
-                    paste0(not_found,collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
+                    paste0(not_found,collapse = ', ')),filename = logFile,type = 'stop')
 }
 
-write.log('\nDependencies:',filename = logFile,append = T,write_to_file = T)
-write.log(dependencies,filename = logFile,append = T,write_to_file = T,type = 'cat')
+write.log('\nDependencies:',filename = logFile,type = 'cat',echo = F)
+write.log(dependencies,filename = logFile,type = 'cat',echo = F)
 
 
 # Get script directory:
@@ -340,7 +359,7 @@ binSets <- unlist(strsplit(arguments$bins,','))
 ## Contig2bin tables:
 for(binSet in binSets){
    if(!file.exists(binSet)){
-      write.log(paste0('File does not exist: ',binSet),filename = logFile,append = T,write_to_file = T,type = 'stop')
+      write.log(paste0('File does not exist: ',binSet),filename = logFile,type = 'stop')
    }
 }
 ## Contig2bin tables checks:
@@ -350,16 +369,16 @@ for(binSet in binSets){
 
 ## Assembly:
 if(!file.exists(arguments$contigs)){
-   write.log(paste0('File does not exist: ',arguments$contigs),filename = logFile,append = T,write_to_file = T,type = 'stop')
+   write.log(paste0('File does not exist: ',arguments$contigs),filename = logFile,type = 'stop')
    # stop(paste0('File does not exist: ',arguments$contigs))
 }
 if(file.size(arguments$contigs) == 0){
-   write.log(paste0('File is empty: ',arguments$contigs),filename = logFile,append = T,write_to_file = T,type = 'stop')
+   write.log(paste0('File is empty: ',arguments$contigs),filename = logFile,type = 'stop')
    # stop(paste0('File does not exist: ',arguments$contigs))
 }
 tmpfile <- file(arguments$contigs)
 if(summary( tmpfile )$class == 'gzfile'){
-   write.log(paste0('Unsupported file: Assembly file is compressed. Please extract: ',arguments$contigs),filename = logFile,append = T,write_to_file = T,type = 'stop')
+   write.log(paste0('Unsupported file: Assembly file is compressed. Please extract: ',arguments$contigs),filename = logFile,type = 'stop')
 }
 close(tmpfile)
 
@@ -369,12 +388,12 @@ if( !is.null(arguments$labels) ){
    
    if(length(binSetLabels) != length(binSets)){
       write.log(paste0('Number of bin sets (', length(binSets),') is different from number of labels (', length(binSetLabels),')'),
-                filename = logFile,append = T,write_to_file = T,type = 'warning')
+                filename = logFile,type = 'warning')
       # warning('Number of bin sets (', length(binSets),') is different from number of labels (', length(binSetLabels),')')
       binSetLabels <- basename(binSets)
    }
    if(any(duplicated(binSetLabels))){
-      write.log('Non-unique bin set labels given', filename = logFile,append = T,write_to_file = T,type = 'warning')
+      write.log('Non-unique bin set labels given', filename = logFile,type = 'warning')
       # warning('Duplicated bin set labels given')
       binSetLabels <- paste0(binSetLabels,'.',sprintf("%02d",c(1:length(binSets))))
    }
@@ -390,7 +409,7 @@ for(i in 1:nrow(binSetToLabel)){
    # print(binSetToLabel[i,binSet])
    if(file.size(binSetToLabel[i,binSet]) == 0){
       ## Warn if contig2bin table is empty, but keep going:
-      write.log(paste0('File is empty: ',binSetToLabel[i,binSet]), filename = logFile,append = T,write_to_file = T,type = 'warning')
+      write.log(paste0('File is empty: ',binSetToLabel[i,binSet]), filename = logFile,type = 'warning')
       # warning(paste0('File is empty: ',binSetToLabel[i,binSet]))
    }else{
       ## Read contig2bin table and concatenate:
@@ -402,7 +421,7 @@ for(i in 1:nrow(binSetToLabel)){
 
 ## Stop if all contig2bin tables are empty:
 if(nrow(binTab) == 0){
-   write.log('No bins provided. Check contig2bin files.', filename = logFile,append = T,write_to_file = T,type = 'error')
+   write.log('No bins provided. Check contig2bin files.', filename = logFile,type = 'error')
    # stop('No bins provided. Check contig2bin files.')
 }
 
@@ -410,7 +429,7 @@ if(nrow(binTab) == 0){
 # TODO: Check this!
 if(nrow(unique(binTab[,.(binner_name,bin_id)])) > length(unique(binTab[,bin_id]))){
    binTab[,bin_id:=paste0(binner_name,'_',bin_id)]
-   write.log(paste0('Non-unique bin-ids given. Renaming bin-ids.'), filename = logFile,append = T,write_to_file = T,type = 'warning')
+   write.log(paste0('Non-unique bin-ids given. Renaming bin-ids.'), filename = logFile,type = 'warning')
 }
 
 
@@ -419,7 +438,7 @@ if(nrow(unique(binTab[,.(binner_name,bin_id)])) > length(unique(binTab[,bin_id])
 # Existence and permissions of output directory
 if(! dir.exists(dirname(arguments$outputbasename))){
    write.log(paste0('Output directory does not exist. Creating: ', dirname(arguments$outputbasename)), 
-             filename = logFile,append = T,write_to_file = T,type = 'warning')
+             filename = logFile,type = 'warning')
    # warning('Output directory does not exist. Creating: ', dirname(arguments$outputbasename))
    system(paste0('mkdir ',dirname(arguments$outputbasename)))
 }
@@ -433,20 +452,69 @@ if( !file.exists(paste0(dbDirectory,'bac.all.faa')) ||
     !file.exists(paste0(dbDirectory,'arc.scg.lookup'))){
    write.log(paste0('Database directory does not exist or is incomplete:', dbDirectory,'\n
                   Attempting to extract ',scriptDir,'/db.zip'), 
-             filename = logFile,append = T,write_to_file = T,type = 'warning')
+             filename = logFile,type = 'warning')
    if(file.exists(paste0(scriptDir,'/db.zip'))){
       system(paste0('unzip -o ',scriptDir,'/db.zip -d ',dbDirectory))
    }else{
       write.log(paste0('File does not exist: ',scriptDir,'/db.zip'), 
-                filename = logFile,append = T,write_to_file = T,type = 'error')
+                filename = logFile,type = 'error')
       # stop(paste0('File does not exist: ',scriptDir,'/db.zip'))
    }
+}
+
+# Existence of custom database
+if(!is.null(arguments$customDbDir)){
+   
+   customSets <- unlist(strsplit(arguments$customDbDir,','))
+   
+   ## check uniqueness of gene set names
+   if(any(duplicated(basename(customSets)))){
+      write.log(paste0('Custom SCG set directory names are not unique: ',paste(basename(customSets),collapse=',')), 
+                filename = logFile,type = 'error')
+   }
+   
+   for(scgSet in customSets){
+      ## genes.hmm
+      if(!file.exists(paste0(scgSet,'/genes.hmm'))){
+         if(file.exists(paste0(scgSet,'/genes.hmm.gz'))){
+            gunzip_command <- paste0('gunzip ',scgSet,'/genes.hmm.gz')
+            write.log(paste0('File not found: ',scgSet,'/genes.hmm','\n\t running: ',gunzip_command),
+                      filename = logFile,type = 'warning')
+            system(gunzip_command)
+         }else{
+            write.log(paste0('Marker gene HMM file not found: ',paste0(scgSet,'/genes.hmm')), 
+                      filename = logFile,type = 'error')
+         }
+      }
+      ## check hmms, (genes.hmm, genes.hmm.h3m)
+      if(!file.exists(paste0(scgSet,'/genes.hmm.h3m'))){
+         hmmpress_command <- paste0('hmmpress ',scgSet,'/genes.hmm')
+         write.log(paste0('File not found: ',scgSet,'/genes.hmm.h3m','\n\t running: ',hmmpress_command),
+                   filename = logFile,type = 'warning')
+         system(hmmpress_command)
+      }
+      ## check set table (genes.txt)
+      if(!file.exists(paste0(scgSet,'/genes.txt'))){
+         write.log(paste0('Marker gene table file not found: ',paste0(scgSet,'/genes.txt')), 
+                   filename = logFile,type = 'error')
+      }
+      ## check noise cutoff (noise_cutoff_terms.txt)
+      if(!file.exists(paste0(scgSet,'/noise_cutoff_terms.txt'))){
+         write.log(paste0('Noise cutoff file not found: ',scgSet,'/noise_cutoff_terms.txt'), 
+                   filename = logFile,type = 'error')
+      }
+   }
+}
+
+if( arguments$useCustomDbOnly && is.null(arguments$customDbDir)){
+   write.log(paste0('--useCustomDbOnly is set but no custom SCG libraries are defined (--customDbDir)'), 
+             filename = logFile,type = 'error')
 }
 
 ##
 ## Calculate contig lengths
 ##
-write.log('Analyzing assembly',filename = logFile,append = T,write_to_file = T,type = 'cat')
+write.log('Analyzing assembly',filename = logFile,type = 'cat')
 system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
               arguments$contigs,' ',
               arguments$outputbasename,'.seqlength'))
@@ -459,11 +527,11 @@ stopifnot(nrow(contigTab)>0)
 missingContigs <- binTab[!contig_id %in% contigTab[,contig_id]]
 if( nrow(missingContigs) > 0){
    write.log(paste0('Error: Contigs of contig2bin files not found in assembly: ', nrow(missingContigs)), 
-             filename = logFile,append = T,write_to_file = T,type = 'cat')
+             filename = logFile,type = 'cat')
    write.log(head(missingContigs[,.(contig_id)]), 
-             filename = logFile,append = T,write_to_file = T,type = 'cat')
+             filename = logFile,type = 'cat')
    write.log('...', 
-             filename = logFile,append = T,write_to_file = T,type = 'cat')
+             filename = logFile,type = 'cat')
    exit()
 }
 
@@ -474,9 +542,9 @@ if( nrow(missingContigs) > 0){
 # Run prodigal
 if(!is.null(arguments$proteins)){
    proteins <- arguments$proteins
-   write.log(paste0('Skipping gene prediction, using protein fasta file: ',proteins),filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log(paste0('Skipping gene prediction, using protein fasta file: ',proteins),filename = logFile,type = 'cat')
 }else{
-   write.log('Predicting genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log('Predicting genes',filename = logFile,type = 'cat')
    
    proteins <- paste0(arguments$outputbasename,'_proteins.faa')
 
@@ -496,7 +564,7 @@ if(!is.null(arguments$proteins)){
 scgTab <- data.table()
 if(!arguments$useCustomDbOnly){
    ## Predict bacterial SCGs
-   write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log('Annotating bacterial single copy genes',filename = logFile,type = 'cat')
    system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
                  searchEngine,' ',
                  proteins,' ',
@@ -508,6 +576,7 @@ if(!arguments$useCustomDbOnly){
    system(paste0('mv ',proteins,'.scg ',proteins,'.bacteria.scg'))
    
    ## Predict archaeal SCGs
+   write.log('Annotating archaeal single copy genes',filename = logFile,type = 'cat')
    system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
                  searchEngine,' ',
                  proteins,' ',
@@ -521,7 +590,7 @@ if(!arguments$useCustomDbOnly){
    ## Stop if no single copy genes were predicted:
    if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins,'.archaea.scg')) == 0){
       write.log('No single copy genes predicted', 
-                filename = logFile,append = T,write_to_file = T,type = 'error')
+                filename = logFile,type = 'error')
       # stop('No single copy genes predicted')
    }else{
       scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
@@ -534,6 +603,8 @@ if(!arguments$useCustomDbOnly){
                                .[,protein_set_size:=38])
       # stopifnot(nrow(scgTab)>0)
    }
+}else{
+   write.log('Skipping default SCG prediction (--useCustomDbOnly is set)',filename = logFile,type = 'cat')
 }
 
 
@@ -544,48 +615,20 @@ if(!is.null(arguments$customDbDir)){
    # customSets <- unlist(strsplit(customDbDir,','))
    if(any(duplicated(basename(customSets)))){
       write.log('Custom SCG set directory names are not unique', 
-                filename = logFile,append = T,write_to_file = T,type = 'error')
+                filename = logFile,type = 'error')
    }
    
    for(scgSet in customSets){
-      # TODO: check if all files are present, hmms are extracted, hmmpress was applied
       
-      ## genes.hmm
-      if(!file.exists(paste0(scgSet,'/genes.hmm'))){
-         if(file.exists(paste0(scgSet,'/genes.hmm.gz'))){
-            write.log(paste0('File not found: ',scgSet,'/genes.hmm','\n\t extracting: ',scgSet,'/genes.hmm.gz'),
-                      filename = logFile,append = T,write_to_file = T,type = 'cat')
-            system(paste0('gunzip ',scgSet,'/genes.hmm.gz'))
-         }else{
-            write.log(paste0('Marker gene HMM file not found: ',paste0(scgSet,'/genes.hmm')), 
-                      filename = logFile,append = T,write_to_file = T,type = 'error')
-         }
-      }
-      
-      ## genes.hmm.h3m (hmmpress)
-      if(!file.exists(paste0(scgSet,'/genes.hmm.h3m'))){
-         hmmpress_command <- paste0('hmmpress ',scgSet,'/genes.hmm')
-         write.log(paste0('File not found: ',scgSet,'/genes.hmm.h3m','\n\t running: ',hmmpress_command),
-                   filename = logFile,append = T,write_to_file = T,type = 'cat')
-         system(hmmpress_command)
-      }
-      
-      # scgSet <- customSets[1]
       setName <- basename(scgSet)
       
+      write.log(paste0('Annotating custom single copy genes: ',setName),filename = logFile,type = 'cat')
+      
       # determine set size
-      if(!file.exists(paste0(scgSet,'/genes.txt'))){
-         write.log(paste0('Marker gene table file not found: ',paste0(scgSet,'/genes.txt')), 
-                   filename = logFile,append = T,write_to_file = T,type = 'error')
-      }
       scgSetSize <- fread(paste0(scgSet,'/genes.txt'),header = T,sep='\t') %>% 
          nrow()
       
       # determine noise cutoff
-      if(!file.exists(paste0(scgSet,'/noise_cutoff_terms.txt'))){
-         write.log(paste0('Noise cutoff file not found: ',scgSet,'/noise_cutoff_terms.txt'), 
-                   filename = logFile,append = T,write_to_file = T,type = 'error')
-      }
       scgNoiseCutoff <- fread(paste0(scgSet,'/noise_cutoff_terms.txt'),header = F,sep='\t')$V1
       
       # run HMMER on custom set
@@ -596,14 +639,11 @@ if(!is.null(arguments$customDbDir)){
          system(hmmscan_command)
       }else{
          write.log(paste0('Skipping HMMER run for SCG set: ',scgSet,'\n\t using ',hmmscan_out),
-                   filename = logFile,append = T,write_to_file = T,type = 'cat')
+                   filename = logFile,type = 'cat')
       }
-      # system(paste0('hmmscan --tblout ', hmmscan_out ,' ',scgNoiseCutoff,' --cpu ',arguments$threads,' "',
-      #               scgSet,'/genes.hmm ','" "',proteins,'">/dev/null 2>&1'))
       
       # parse HMMER result
-      # TODO: account for empty hmmscan results
-      hmmscan_tab <- read_tblout(hmmscan_out) %>%
+      hmmscan_tab <- read_tblout_quietly(hmmscan_out) %>%
          data.table() 
       if(nrow(hmmscan_tab)>0){
          hmmscan_tab <- hmmscan_tab %>% 
@@ -615,6 +655,8 @@ if(!is.null(arguments$customDbDir)){
                                         protein_set=setName,
                                         contig_id=gsub('_[0-9]+$','',protein_id),
                                         protein_set_size=scgSetSize)])
+      }else{
+         write.log(paste0('No single copy genes found for set: ',setName),filename = logFile,type = 'warning')
       }
       
    }
@@ -622,30 +664,37 @@ if(!is.null(arguments$customDbDir)){
 
 if(nrow(scgTab) == 0){
    write.log('No single copy genes predicted', 
-             filename = logFile,append = T,write_to_file = T,type = 'error')
+             filename = logFile,type = 'error')
 }
 
 
 ##
 ## Run bin selection
 ##
-write.log('Dereplicating, aggregating, and scoring bins',filename = logFile,append = T,write_to_file = T,type = 'cat')
-bin_evaluations <- cherry_pick(binTab=binTab,
-                                scgTab=scgTab,
-                                contigTab=contigTab,
-                                output_basename=arguments$outputbasename,
-                                score_threshold=as.numeric(arguments$score_threshold),
-                                duplicate_penalty=as.numeric(arguments$duplicate_penalty),
-                                megabin_penalty=as.numeric(arguments$megabin_penalty),
-                                write_unbinned=arguments$write_unbinned,
-                                write_bin_evals=arguments$write_bin_evals)
-
+write.log('Dereplicating, aggregating, and scoring bins',filename = logFile,type = 'cat')
+cherry_pick(binTab=binTab,
+              scgTab=scgTab,
+              contigTab=contigTab,
+              output_basename=arguments$outputbasename,
+              score_threshold=as.numeric(arguments$score_threshold),
+              duplicate_penalty=as.numeric(arguments$duplicate_penalty),
+              megabin_penalty=as.numeric(arguments$megabin_penalty),
+              write_unbinned=arguments$write_unbinned,
+              write_bin_evals=arguments$write_bin_evals)
+if(file.exists(paste0(arguments$outputbasename,'_DASTool_summary.tsv'))){
+   binStats <- fread(paste0(arguments$outputbasename,'_DASTool_summary.tsv'))
+   write.log(paste0('Result: ',nrow(binStats),' bins above score threshold ',arguments$score_threshold,' returned'),
+             filename = logFile,type = 'cat')
+}else{
+   write.log(paste0('Result: No bins above score threshold ',arguments$score_threshold,' returned'),
+             filename = logFile,type = 'cat')
+}
 
 ##
 ## Extract bins
 ##
 if(arguments$write_bins){
-   write.log('Writing bins',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log('Writing bins',filename = logFile,type = 'cat')
    binDir <- paste0(dirname(arguments$outputbasename),'/DASTool_bins')
    if(!dir.exists(binDir)){
       system(paste0('mkdir ',binDir))

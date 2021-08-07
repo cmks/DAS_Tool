@@ -30,6 +30,9 @@ Options:
                                           Only change if you know what you are doing (0..3) [default: 0.6].
  --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
  --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
+ --customDbDir=<customDbDir>              Directory of custom single copy gene database(s). One directory per set. Multiple sets can be comma separated.
+ --useCustomDbOnly                        Only use custom single copy gene database(s).
+ --customDbFormat                         Format of custom single copy gene database(s) [default: anvio].
  --resume                                 Use existing predicted single copy gene files from a previous run.
  --debug                                  Write debug information to log file.
  -v --version                             Print version number and exit.
@@ -68,7 +71,7 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 - Contigs to bin file of output bins (DASTool_contigs2bin.txt).
 - Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
 - Plots showing the amount of high quality bins and score distribution of bins per method, if ```--create_plots 1``` is set (DASTool_hqBins.pdf, DASTool_scores.pdf).
-- Bins in fasta format if ```--write_bins 1``` is set (DASTool_bins).
+- Bins in fasta format if ```--write_bins``` is set (DASTool_bins).
 
 
 
@@ -100,19 +103,50 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
              --score_threshold 0.6
 ```
 
+**Example 3:** Run DAS Tool using with an additional custom SGC library (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
+```
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
+             -l concoct,maxbin,metabat,tetraESOM
+             -c sample_data/sample.human.gut_contigs.fa
+             -o sample_output/DASToolCustomScgRun01
+             --proteins sample_output/DASToolRun1_proteins.faa
+             --threads 2
+             --customDbDir db/Protista_83
+```
+
+**Example 4:** Run DAS Tool using only custom SGC libraries (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
+```
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
+             -l concoct,maxbin,metabat,tetraESOM
+             -c sample_data/sample.human.gut_contigs.fa
+             -o sample_output/DASToolCustomScgRun02
+             --proteins sample_output/DASToolRun1_proteins.faa
+             --threads 2
+             --customDbDir db/Bacteria_71,db/Archaea_76,db/Protista_83
+             --useCustomDbOnly
+```
+
 
 # Dependencies
 
-- R (>= 3.2.3): https://www.r-project.org
-- R-packages: data.table (>= 1.9.6), magrittr (>= 2.0.1), docopt (>= 0.7.1)
-- ruby (>= v2.3.1): https://www.ruby-lang.org
-- Pullseq (>= 1.0.2): https://github.com/bcthomas/pullseq
-- Prodigal (>= 2.6.3): https://github.com/hyattpd/Prodigal
-- coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
+- [R](https://www.r-project.org) (>= 3.2.3)
+- R-packages: [data.table](https://CRAN.R-project.org/package=data.table) (>= 1.9.6), [magrittr](https://CRAN.R-project.org/package=magrittr) (>= 2.0.1), [docopt](https://CRAN.R-project.org/package=docopt) (>= 0.7.1), [rhmmer](https://CRAN.R-project.org/package=rhmmer) (>= 0.1.0)
+- [ruby](https://www.ruby-lang.org) (>= v2.3.1)
+- [Pullseq](https://github.com/bcthomas/pullseq) (>= 1.0.2)
+- [Prodigal](https://github.com/hyattpd/Prodigal) (>= 2.6.3)
+- [coreutils](https://www.gnu.org/software/coreutils) (only macOS/ OS X)
 - One of the following search engines:
-  - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
-	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
-  - USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
+  - [DIAMOND](https://ab.inf.uni-tuebingen.de/software/diamond) (>= 0.9.14)
+  - [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi) (>= 2.5.0)
+  - [USEARCH](http://www.drive5.com/usearch/download.html)* (>= 8.1)
+- When using custom SCG libraries:
+  - [HMMER3](http://hmmer.org) (>= 3.3.2)
 
 \*) The free version of USEARCH only can use up to 4Gb RAM. Therefore, the use of DIAMOND or BLAST+ is recommended for big datasets.
 
@@ -134,12 +168,7 @@ unzip ./db.zip -d db
 
 Installation of dependent R-packages:
 ```
-$ R
-> repo='http://cran.us.r-project.org' #select a repository
-> install.packages('data.table', repos=repo, dependencies = T)
-> install.packages('magrittr', repos=repo, dependencies = T)
-> install.packages('docopt', repos=repo, dependencies = T)
-> q() #quit R-session
+$ R -e "install.packages(c('data.table','magrittr','docopt','rhmmer'), repos='http://cran.us.r-project.org')"
 ```
 
 # Installation using conda or homebrew
@@ -216,6 +245,17 @@ NODE_2_length_147519_cov_33.166976	concoct.42
 NODE_3_length_141012_cov_38.678171	concoct.42
 NODE_4_length_139685_cov_35.741896	concoct.42
 ```
+
+# Using custom SCG libraries
+
+Custom single copy gene libraries have to be provided as HMMs and [HMMER3](http://hmmer.org) is needed as additional dependency. Each SCG library has to be provided in a separate directory, where the library name is defined by the directory name. The directory content requires at least the following files (this format was adopted from [ANVIO](https://github.com/merenlab/anvio)'s SCG libraries (https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
+ - genes.hmm: HMMs of the SCG set
+ - genes.txt: Table of gene  names and accessions
+ - noise_cutoff_terms.txt: File defining the noise cutoff, which is passed to HMMER3
+
+Using the ` --customDbDir` option, one or multiple SCG libraries (separated by `,`) can be defined. With `--useCustomDbOnly`, only the provided custom SCG libraries are used and the prediction using the default bacterial and archaeal SCGs of DAS Tool is skipped.
+
+
 
 # Trouble shooting and FAQs
 
