@@ -103,35 +103,6 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
              --score_threshold 0.6
 ```
 
-**Example 3:** Run DAS Tool using with an additional custom SGC library (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
-```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolCustomScgRun01
-             --proteins sample_output/DASToolRun1_proteins.faa
-             --threads 2
-             --customDbDir db/Protista_83
-```
-
-**Example 4:** Run DAS Tool using only custom SGC libraries (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
-```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolCustomScgRun02
-             --proteins sample_output/DASToolRun1_proteins.faa
-             --threads 2
-             --customDbDir db/Bacteria_71,db/Archaea_76,db/Protista_83
-             --useCustomDbOnly
-```
-
 
 # Dependencies
 
@@ -255,6 +226,33 @@ Custom single copy gene libraries have to be provided as HMMs and [HMMER3](http:
 
 Using the ` --customDbDir` option, one or multiple SCG libraries (separated by `,`) can be defined. With `--useCustomDbOnly`, only the provided custom SCG libraries are used and the prediction using the default bacterial and archaeal SCGs of DAS Tool is skipped.
 
+
+**Example 1:** Run DAS Tool using with an additional custom SGC library (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
+```
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
+             -l concoct,maxbin,metabat,tetraESOM
+             -c sample_data/sample.human.gut_contigs.fa
+             -o sample_output/DASToolCustomScgRun01
+             --threads 2
+             --customDbDir db/Protista_83
+```
+
+**Example 2:** Run DAS Tool using *only* custom SGC libraries:
+```
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
+                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
+                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
+                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
+             -l concoct,maxbin,metabat,tetraESOM
+             -c sample_data/sample.human.gut_contigs.fa
+             -o sample_output/DASToolCustomScgRun02
+             --threads 2
+             --customDbDir db/Bacteria_71,db/Archaea_76,db/Protista_83
+             --useCustomDbOnly
+```
 
 
 # Trouble shooting and FAQs
