@@ -168,7 +168,7 @@ unzip ./db.zip -d db
 
 Installation of dependent R-packages:
 ```
-$ R -e "install.packages(c('data.table','magrittr','docopt','rhmmer'), repos='http://cran.us.r-project.org')"
+R -e "install.packages(c('data.table','magrittr','docopt','rhmmer'), repos='http://cran.us.r-project.org')"
 ```
 
 # Installation using conda or homebrew
