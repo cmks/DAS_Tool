@@ -54,7 +54,7 @@ suppressMessages(suppressWarnings(library(data.table, warn.conflicts = F, quietl
 suppressMessages(suppressWarnings(library(magrittr, warn.conflicts = F, quietly = T)))
 suppressMessages(suppressWarnings(library(docopt, warn.conflicts = F, quietly = T)))
 
-cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,write_unbinned,write_bin_evals){
+cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,write_unbinned,write_bin_evals,logFile){
    
    # thresholds:
    score_threshold <- max(score_threshold,-42)
@@ -67,6 +67,7 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    setkey(contigTab,'contig_id')
    
    # join tables
+   scgTab <- scgTab[ contig_id %in% binTab[, contig_id]]
    binTabScg <- binTab[scgTab]
    binTabContig <- contigTab[binTab]
    
@@ -91,13 +92,13 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    max_score <- max(binTabEval[,score])
    
    if(max_score < score_threshold){
-      write.log(message = paste0('No bins with bin-score >', score_threshold, ' found. Adjust score_threshold to report bins with lower quality.\n Aborting.\n'),filename = logfile)
+      write.log(message = paste0('No bins with bin-score >', score_threshold, ' found. Adjust score_threshold to report bins with lower quality.\n Aborting.\n'),filename = logFile)
       return(-1)
    }
    
    append <- F
    sub_bins <- c()
-   # write.log(message = paste0('starting bin selection from ', dim(bin_summary)[1],' bins'),filename = logfile,write_to_stdout = T)
+   
    while(max_score > internal_score_threshold){
       
       # identify highest scoring bin
@@ -160,9 +161,6 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
          fwrite(paste0(output_basename,'_DASTool_contig2bin.tsv'),sep='\t',col.names=F,row.names = F,quote=F,append = append)
       
    }
-   
-   # write.log(message = paste0('bin selection complete: ',reported_bins,' bins above score threshold selected.'),filename = logfile,write_to_stdout = T)
-   
 }
 
 
@@ -380,10 +378,9 @@ for(i in 1:nrow(binSetToLabel)){
    if(file.size(binSetToLabel[i,binSet]) == 0){
       ## Warn if contig2bin table is empty, but keep going:
       write.log(paste0('File is empty: ',binSetToLabel[i,binSet]), filename = logFile,append = T,write_to_file = T,type = 'warning')
-      # warning(paste0('File is empty: ',binSetToLabel[i,binSet]))
    }else{
       ## Read contig2bin table and concatenate:
-      dt <- fread(binSetToLabel[i,binSet],header=F,col.names=c('contig_id','bin_id')) %>% 
+      dt <- fread(binSetToLabel[i,binSet],header=F,col.names=c('contig_id','bin_id'),sep='\t') %>% 
          .[,binner_name:=binSetToLabel[i,binSetLabel]]
       binTab <- rbind(binTab,dt)
    }
@@ -392,7 +389,6 @@ for(i in 1:nrow(binSetToLabel)){
 ## Stop if all contig2bin tables are empty:
 if(nrow(binTab) == 0){
    write.log('No bins provided. Check contig2bin files.', filename = logFile,append = T,write_to_file = T,type = 'error')
-   # stop('No bins provided. Check contig2bin files.')
 }
 
 # Check for duplicate bin-IDs
@@ -409,7 +405,6 @@ if(nrow(unique(binTab[,.(binner_name,bin_id)])) > length(unique(binTab[,bin_id])
 if(! dir.exists(dirname(arguments$outputbasename))){
    write.log(paste0('Output directory does not exist. Creating: ', dirname(arguments$outputbasename)), 
              filename = logFile,append = T,write_to_file = T,type = 'warning')
-   # warning('Output directory does not exist. Creating: ', dirname(arguments$outputbasename))
    system(paste0('mkdir ',dirname(arguments$outputbasename)))
 }
 
@@ -440,7 +435,7 @@ system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
               arguments$contigs,' ',
               arguments$outputbasename,'.seqlength'))
 
-contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),header=F,col.names=c('contig_id','contig_length')) %>% 
+contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),header=F,col.names=c('contig_id','contig_length'),sep='\t') %>% 
    .[,contig_id:=gsub(' .*','',contig_id)]
 
 stopifnot(nrow(contigTab)>0)
@@ -463,7 +458,7 @@ if( nrow(missingContigs) > 0){
 # Run prodigal
 if(!is.null(arguments$proteins)){
    proteins <- arguments$proteins
-   write.log(paste0('Skipping gene prediction, using protein fasta file: ',proteins),filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log(paste0('Skipping gene prediction\n\t using protein fasta file: ',proteins),filename = logFile,append = T,write_to_file = T,type = 'cat')
 }else{
    write.log('Predicting genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
    
@@ -483,27 +478,39 @@ if(!is.null(arguments$proteins)){
 
 # Identify single copy genes
 ## Predict bacterial SCGs
-write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
-system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
-              searchEngine,' ',
-              proteins,' ',
-              dbDirectory,'/bac.all.faa ',
-              dbDirectory,'/bac.scg.faa ',
-              dbDirectory,'/bac.scg.lookup ',
-              threads,
-              ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-system(paste0('mv ',proteins,'.scg ',proteins,'.bacteria.scg'))
+bacteria_scg_out <- paste0(proteins,'.bacteria.scg')
+if(!arguments$resume || !file.exists(bacteria_scg_out)){
+   write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
+                 searchEngine,' ',
+                 proteins,' ',
+                 dbDirectory,'/bac.all.faa ',
+                 dbDirectory,'/bac.scg.faa ',
+                 dbDirectory,'/bac.scg.lookup ',
+                 threads,
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+   system(paste0('mv ',proteins,'.scg ',bacteria_scg_out))
+}else{
+   write.log(paste0('Skipping SCG prediction for SCG set: bacteria','\n\t using ',bacteria_scg_out),
+             filename = logFile,type = 'cat')
+}
 
 ## Predict archaeal SCGs
-system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
-              searchEngine,' ',
-              proteins,' ',
-              dbDirectory,'/arc.all.faa ',
-              dbDirectory,'/arc.scg.faa ',
-              dbDirectory,'/arc.scg.lookup ',
-              threads,
-              ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-system(paste0('mv ',proteins,'.scg ',proteins,'.archaea.scg'))
+archaea_scg_out <- paste0(proteins,'.archaea.scg')
+if(!arguments$resume || !file.exists(archaea_scg_out)){
+   system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
+                 searchEngine,' ',
+                 proteins,' ',
+                 dbDirectory,'/arc.all.faa ',
+                 dbDirectory,'/arc.scg.faa ',
+                 dbDirectory,'/arc.scg.lookup ',
+                 threads,
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+   system(paste0('mv ',proteins,'.scg ',archaea_scg_out))
+}else{
+   write.log(paste0('Skipping SCG prediction for SCG set: archaea','\n\t using ',archaea_scg_out),
+             filename = logFile,type = 'cat')
+}
 
 ## Stop if no single copy genes were predicted:
 if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins,'.archaea.scg')) == 0){
@@ -511,12 +518,12 @@ if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins
              filename = logFile,append = T,write_to_file = T,type = 'error')
    # stop('No single copy genes predicted')
 }else{
-   scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
+   scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
                             .[,protein_set:='bacteria'] %>% 
                             .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                             .[,protein_set_size:=51],
-                   fread(paste0(proteins,'.archaea.scg'),header=F,col.names=c('protein_id','protein_name')) %>% 
-                            .[,protein_set:='.archaea'] %>% 
+                   fread(paste0(proteins,'.archaea.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
+                            .[,protein_set:='archaea'] %>% 
                             .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                             .[,protein_set_size:=38])
    stopifnot(nrow(scgTab)>0)
@@ -535,7 +542,8 @@ bin_evaluations <- cherry_pick(binTab=binTab,
                                 duplicate_penalty=as.numeric(arguments$duplicate_penalty),
                                 megabin_penalty=as.numeric(arguments$megabin_penalty),
                                 write_unbinned=arguments$write_unbinned,
-                                write_bin_evals=arguments$write_bin_evals)
+                                write_bin_evals=arguments$write_bin_evals,
+                               logFile=logFile)
 
 
 ##
