@@ -14,26 +14,26 @@ Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, M
 DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
 
 Options:
- -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
- -c --contigs=<contigs>                   Contigs in fasta format.
- -o --outputbasename=<outputbasename>     Basename of output files.
- -l --labels=<labels>                     Comma separated list of binning prediction names.
- --search_engine=<search_engine>          Engine used for single copy gene identification (blast/diamond/usearch) [default: diamond].
- -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
-                                          Gene prediction step will be skipped.
- --write_bin_evals                        Write evaluation of input bin sets.
- --write_bins                             Export bins as fasta files.
- --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
- -t --threads=<threads>                   Number of threads to use [default: 1].
- --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
- --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
-                                          Only change if you know what you are doing (0..3) [default: 0.6].
- --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
- --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
- --resume                                 Use existing predicted single copy gene files from a previous run.
- --debug                                  Write debug information to log file.
- -v --version                             Print version number and exit.
- -h --help                                Show this.
+   -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
+   -c --contigs=<contigs>                   Contigs in fasta format.
+   -o --outputbasename=<outputbasename>     Basename of output files.
+   -l --labels=<labels>                     Comma separated list of binning prediction names.
+   --search_engine=<search_engine>          Engine used for single copy gene identification (diamond/blastp/usearch) [default: diamond].
+   -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
+                                            Gene prediction step will be skipped.
+   --write_bin_evals                        Write evaluation of input bin sets.
+   --write_bins                             Export bins as fasta files.
+   --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
+   -t --threads=<threads>                   Number of threads to use [default: 1].
+   --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
+   --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
+                                            Only change if you know what you are doing (0..3) [default: 0.6].
+   --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
+   --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
+   --resume                                 Use existing predicted single copy gene files from a previous run.
+   --debug                                  Write debug information to log file.
+   -v --version                             Print version number and exit.
+   -h --help                                Show this.
 
 ```
 
@@ -64,11 +64,10 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 ```
 
 ### Output files
-- Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
-- Contigs to bin file of output bins (DASTool_contigs2bin.txt).
-- Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
-- Plots showing the amount of high quality bins and score distribution of bins per method, if ```--create_plots 1``` is set (DASTool_hqBins.pdf, DASTool_scores.pdf).
-- Bins in fasta format if ```--write_bins 1``` is set (DASTool_bins).
+- Summary of output bins including quality and completeness estimates (*_DASTool_summary.tsv).
+- Contigs to bin file of output bins (*_DASTool_contigs2bin.tsv).
+- Quality and completeness estimates of input bin sets, if ```--write_bin_evals```  is set (*_allBins.eval).
+- Bins in fasta format if ```--write_bins``` is set (DASTool_bins).
 
 
 
@@ -217,7 +216,18 @@ NODE_3_length_141012_cov_38.678171	concoct.42
 NODE_4_length_139685_cov_35.741896	concoct.42
 ```
 
-# Trouble shooting and FAQs
+# Troubleshooting/ known issues
+
+### Docopt issue
+
+**Problem:** When executing DAS Tool a truncated version of the help message is displayed. This is a known bug of the current version of the `docopt` R package, which occurs if the command-line syntax is violated.
+```
+
+```
+
+**Solution:** Check command line for any typos.
+
+
 
 ### Dependencies not found
 
