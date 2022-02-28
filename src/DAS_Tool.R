@@ -20,7 +20,7 @@ Options:
    -c --contigs=<contigs>                   Contigs in fasta format.
    -o --outputbasename=<outputbasename>     Basename of output files.
    -l --labels=<labels>                     Comma separated list of binning prediction names.
-   --search_engine=<search_engine>          Engine used for single copy gene identification (blast/diamond/usearch) [default: diamond].
+   --search_engine=<search_engine>          Engine used for single copy gene identification (diamond/blastp/usearch) [default: diamond].
    -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
                                             Gene prediction step will be skipped.
    --write_bin_evals                        Write evaluation of input bin sets.
@@ -219,7 +219,7 @@ score_bins <- function(bin_tab_scg,bin_tab_contig,b=.6,c=.5){
       .[,score:=calc_bin_score(b=.6,c=.5,protein_set_size,uniqueSCG,duplicatedSCG,sumSCG,additionalSCG)] %>% 
       .[,completeness:=uniqueSCG/protein_set_size] %>% 
       .[,contamination:=duplicatedSCG/protein_set_size] %>% 
-      .[ order(score,contigN50,decreasing = T)] %>% 
+      .[ order(score,contigN50,binSize,decreasing = T)] %>% 
       .[.[, .I[which.max(score)], by=bin_id]$V1]
    
    return(bin_tab_eval)
@@ -279,12 +279,12 @@ threads <- max(1,as.numeric(arguments$threads))
 
 # Check options
 ## search engine %in% diamond, usearch, blastp?
-if(!tolower(arguments$search_engine) %in% c('diamond', 'usearch', 'blastp')){
+if(!tolower(arguments$search_engine) %in% c('diamond', 'usearch', 'blastp', 'blast')){
    write.log(paste0('Unknown argument for --search_engine: ',arguments$search_engine,'\n',
                     'Defaulting to diamond'),filename = logFile,append = T,write_to_file = T,type = 'warning')
    searchEngine <- 'diamond'
 }else{
-   searchEngine <- tolower(arguments$search_engine)
+   searchEngine <- tolower(arguments$search_engine) %>% gsub('blastp','blast',.)
 }
 
 # Check dependencies
@@ -513,9 +513,10 @@ if(!arguments$resume || !file.exists(archaea_scg_out)){
 }
 
 ## Stop if no single copy genes were predicted:
-if(file.size(paste0(proteins,'.bacteria.scg')) == 0 || file.size(paste0(proteins,'.archaea.scg')) == 0){
+if(!file.exists(paste0(proteins,'.bacteria.scg')) || file.size(paste0(proteins,'.bacteria.scg')) == 0 || 
+   !file.exists(paste0(proteins,'.archaea.scg')) || file.size(paste0(proteins,'.archaea.scg')) == 0){
    write.log('No single copy genes predicted', 
-             filename = logFile,append = T,write_to_file = T,type = 'error')
+             filename = logFile,append = T,write_to_file = T,type = 'stop')
    # stop('No single copy genes predicted')
 }else{
    scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
