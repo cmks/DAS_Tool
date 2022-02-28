@@ -240,7 +240,6 @@ write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
       }
       if(type == 'warning'){
          cat('Warning: ',message,'\n')
-         # warning(paste0(message,'\n'))
       }
       if(type == 'stop'){
          cat('Error: ',message,'\n')
@@ -259,7 +258,6 @@ write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
 version <- 'DAS Tool 1.1.4\n'
 
 arguments <- docopt(doc, version = version)
-# print(arguments)
 
 # Init log file
 logFile <- paste0(arguments$outputbasename,'_DASTool.log')
@@ -330,19 +328,13 @@ for(binSet in binSets){
       write.log(paste0('File does not exist: ',binSet),filename = logFile,append = T,write_to_file = T,type = 'stop')
    }
 }
-## Contig2bin tables checks:
-### - duplicated contig names - does it matter?
-### - do contig names match assembly contigs?
-
 
 ## Assembly:
 if(!file.exists(arguments$contigs)){
    write.log(paste0('File does not exist: ',arguments$contigs),filename = logFile,append = T,write_to_file = T,type = 'stop')
-   # stop(paste0('File does not exist: ',arguments$contigs))
 }
 if(file.size(arguments$contigs) == 0){
    write.log(paste0('File is empty: ',arguments$contigs),filename = logFile,append = T,write_to_file = T,type = 'stop')
-   # stop(paste0('File does not exist: ',arguments$contigs))
 }
 tmpfile <- file(arguments$contigs)
 if(summary( tmpfile )$class == 'gzfile'){
@@ -351,22 +343,22 @@ if(summary( tmpfile )$class == 'gzfile'){
 close(tmpfile)
 
 # Check bin set labels
+binSetLabels <- basename(binSets)
 if( !is.null(arguments$labels) ){
    binSetLabels <- unlist(strsplit(arguments$labels,','))
-   
+
    if(length(binSetLabels) != length(binSets)){
       write.log(paste0('Number of bin sets (', length(binSets),') is different from number of labels (', length(binSetLabels),')'),
                 filename = logFile,append = T,write_to_file = T,type = 'warning')
-      # warning('Number of bin sets (', length(binSets),') is different from number of labels (', length(binSetLabels),')')
       binSetLabels <- basename(binSets)
    }
-   if(any(duplicated(binSetLabels))){
+}
+if(any(duplicated(binSetLabels))){
+   if( !is.null(arguments$labels) ){
       write.log('Non-unique bin set labels given', filename = logFile,append = T,write_to_file = T,type = 'warning')
-      # warning('Duplicated bin set labels given')
-      binSetLabels <- paste0(binSetLabels,'.',sprintf("%02d",c(1:length(binSets))))
    }
-}else{
-   binSetLabels <- paste0('binner.',sprintf("%02d",c(1:length(binSets))))
+   # write.log('Creating bin set labels', filename = logFile,append = T,write_to_file = T,type = 'cat')
+   binSetLabels <- paste0(binSetLabels,'binner.',sprintf("%02d",c(1:length(binSets))))
 }
 
 binSetToLabel <- data.table(inputNo=c(1:length(binSets)),binSetLabel=binSetLabels,binSet=binSets)
@@ -392,14 +384,11 @@ if(nrow(binTab) == 0){
 }
 
 # Check for duplicate bin-IDs
-# TODO: Check this!
 if(nrow(unique(binTab[,.(binner_name,bin_id)])) > length(unique(binTab[,bin_id]))){
    binTab[,bin_id:=paste0(binner_name,'_',bin_id)]
    write.log(paste0('Non-unique bin-ids given. Renaming bin-ids.'), filename = logFile,append = T,write_to_file = T,type = 'warning')
 }
 
-
-# print(binSetToLabel[,.(binSetLabel,binSet)])
 
 # Existence and permissions of output directory
 if(! dir.exists(dirname(arguments$outputbasename))){
@@ -423,7 +412,6 @@ if( !file.exists(paste0(dbDirectory,'bac.all.faa')) ||
    }else{
       write.log(paste0('File does not exist: ',scriptDir,'/db.zip'), 
                 filename = logFile,append = T,write_to_file = T,type = 'error')
-      # stop(paste0('File does not exist: ',scriptDir,'/db.zip'))
    }
 }
 
@@ -444,9 +432,7 @@ missingContigs <- binTab[!contig_id %in% contigTab[,contig_id]]
 if( nrow(missingContigs) > 0){
    write.log(paste0('Error: Contigs of contig2bin files not found in assembly: ', nrow(missingContigs)), 
              filename = logFile,append = T,write_to_file = T,type = 'cat')
-   write.log(head(missingContigs[,.(contig_id)]), 
-             filename = logFile,append = T,write_to_file = T,type = 'cat')
-   write.log('...', 
+   write.log(paste0(paste0(head(missingContigs[,contig_id],5),collapse = ',\n'), ifelse(nrow(missingContigs) >5,',...','')),
              filename = logFile,append = T,write_to_file = T,type = 'cat')
    exit()
 }
