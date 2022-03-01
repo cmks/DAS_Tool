@@ -6,6 +6,24 @@
 #
 # Please cite https://doi.org/10.1101/107789
 #
+#
+# DAS Tool Copyright (c) 2017, The Regents of the University of California, through Lawrence
+# Berkeley National Laboratory (subject to receipt of any required approvals from the U.S.
+# Dept. of Energy).  All rights reserved.
+#
+# If you have questions about your rights to use or distribute this software, please contact
+# Berkeley Lab's Innovation and Partnerships department at IPO@lbl.gov referring to
+# "DAS Tool (2017-024)".
+#
+# NOTICE.  This software was developed under funding from the U.S. Department of Energy.  As
+# such, the U.S. Government has been granted for itself and others acting on its behalf a
+# paid-up, nonexclusive, irrevocable, worldwide license in the Software to reproduce,
+# prepare derivative works, and perform publicly and display publicly. The U.S. Government
+# is granted for itself and others acting on its behalf a paid-up, nonexclusive,
+# irrevocable, worldwide license in the Software to reproduce, prepare derivative works,
+# distribute copies to the public, perform publicly and display publicly, and to permit
+# others to do so.
+#
 
 doc <- "DAS Tool
 
@@ -57,7 +75,7 @@ suppressMessages(suppressWarnings(library(docopt, warn.conflicts = F, quietly = 
 cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,write_unbinned,write_bin_evals,logFile){
    
    # thresholds:
-   score_threshold <- max(score_threshold,-42)
+   # score_threshold <- max(score_threshold,-42)
    internal_ratio_threshold <- 0.0
    internal_score_threshold <- min(0.0,score_threshold)
    
@@ -216,7 +234,7 @@ score_bins <- function(bin_tab_scg,bin_tab_contig,b=.6,c=.5){
       setkey(bin_id,binner_name)
    
    bin_tab_eval <- bin_tab_contig_eval[bin_tab_scg_eval] %>% 
-      .[,score:=calc_bin_score(b=.6,c=.5,protein_set_size,uniqueSCG,duplicatedSCG,sumSCG,additionalSCG)] %>% 
+      .[,score:=calc_bin_score(b=b,c=c,protein_set_size,uniqueSCG,duplicatedSCG,sumSCG,additionalSCG)] %>% 
       .[,completeness:=uniqueSCG/protein_set_size] %>% 
       .[,contamination:=duplicatedSCG/protein_set_size] %>% 
       .[ order(score,contigN50,binSize,decreasing = T)] %>% 
@@ -277,12 +295,11 @@ threads <- max(1,as.numeric(arguments$threads))
 
 # Check options
 ## search engine %in% diamond, usearch, blastp?
-if(!tolower(arguments$search_engine) %in% c('diamond', 'usearch', 'blastp', 'blast')){
+searchEngine <- tolower(arguments$search_engine) #%>% gsub('blastp','blast',.)
+if(!searchEngine %in% c('diamond', 'usearch', 'blastp')){
    write.log(paste0('Unknown argument for --search_engine: ',arguments$search_engine,'\n',
                     'Defaulting to diamond'),filename = logFile,append = T,write_to_file = T,type = 'warning')
    searchEngine <- 'diamond'
-}else{
-   searchEngine <- tolower(arguments$search_engine) %>% gsub('blastp','blast',.)
 }
 
 # Check dependencies
@@ -297,12 +314,13 @@ if(is.null(arguments$proteins)){
 if(any(dependencies[ path == '', dependency ] %in% min_dependencies)){
    
    write.log(paste0('Cannot find dependencies: ', 
-                    paste0(dependencies[ path == '', dependency ],collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
+                    paste0(dependencies[ path == '' ] %>% .[dependency %in% min_dependencies, dependency] ,collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
 }
 
 write.log('\nDependencies:',filename = logFile,append = T,write_to_file = T)
 write.log(dependencies,filename = logFile,append = T,write_to_file = T,type = 'cat')
 
+searchEngine <- gsub('blastp','blast',searchEngine) # for SCG-finder blast-script
 
 # Get script directory:
 cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -426,8 +444,7 @@ system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
 contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),header=F,col.names=c('contig_id','contig_length'),sep='\t') %>% 
    .[,contig_id:=gsub(' .*','',contig_id)]
 
-stopifnot(nrow(contigTab)>0)
-# Check if bin-set contigs are in assembly:
+## Check if bin-set contigs are in assembly:
 missingContigs <- binTab[!contig_id %in% contigTab[,contig_id]]
 if( nrow(missingContigs) > 0){
    write.log(paste0('Error: Contigs of contig2bin files not found in assembly: ', nrow(missingContigs)), 
@@ -466,7 +483,7 @@ if(!is.null(arguments$proteins)){
 ## Predict bacterial SCGs
 bacteria_scg_out <- paste0(proteins,'.bacteria.scg')
 if(!arguments$resume || !file.exists(bacteria_scg_out)){
-   write.log('Annotating single copy genes',filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log(paste0('Annotating single copy genes using ',searchEngine),filename = logFile,append = T,write_to_file = T,type = 'cat')
    system(paste0('ruby ', scriptDir,'/src/scg_blank_',searchEngine,'.rb ',
                  searchEngine,' ',
                  proteins,' ',
@@ -475,7 +492,12 @@ if(!arguments$resume || !file.exists(bacteria_scg_out)){
                  dbDirectory,'/bac.scg.lookup ',
                  threads,
                  ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-   system(paste0('mv ',proteins,'.scg ',bacteria_scg_out))
+   if(file.exists(paste0(proteins,'.scg'))){
+      system(paste0('mv ',proteins,'.scg ',bacteria_scg_out))
+   }else{
+      write.log(paste0('Single copy gene prediction failed: bacteria'), 
+                filename = logFile,append = T,write_to_file = T,type = 'error')
+   }
 }else{
    write.log(paste0('Skipping SCG prediction for SCG set: bacteria','\n\t using ',bacteria_scg_out),
              filename = logFile,type = 'cat')
@@ -492,7 +514,12 @@ if(!arguments$resume || !file.exists(archaea_scg_out)){
                  dbDirectory,'/arc.scg.lookup ',
                  threads,
                  ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
-   system(paste0('mv ',proteins,'.scg ',archaea_scg_out))
+   if(file.exists(paste0(proteins,'.scg'))){
+      system(paste0('mv ',proteins,'.scg ',archaea_scg_out))
+   }else{
+      write.log(paste0('Single copy gene prediction failed: archaea'), 
+                filename = logFile,append = T,write_to_file = T,type = 'error')
+   }
 }else{
    write.log(paste0('Skipping SCG prediction for SCG set: archaea','\n\t using ',archaea_scg_out),
              filename = logFile,type = 'cat')
@@ -503,7 +530,6 @@ if(!file.exists(paste0(proteins,'.bacteria.scg')) || file.size(paste0(proteins,'
    !file.exists(paste0(proteins,'.archaea.scg')) || file.size(paste0(proteins,'.archaea.scg')) == 0){
    write.log('No single copy genes predicted', 
              filename = logFile,append = T,write_to_file = T,type = 'stop')
-   # stop('No single copy genes predicted')
 }else{
    scgTab <- rbind(fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
                             .[,protein_set:='bacteria'] %>% 
@@ -513,7 +539,6 @@ if(!file.exists(paste0(proteins,'.bacteria.scg')) || file.size(paste0(proteins,'
                             .[,protein_set:='archaea'] %>% 
                             .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                             .[,protein_set_size:=38])
-   stopifnot(nrow(scgTab)>0)
 }
 
 
@@ -538,7 +563,7 @@ bin_evaluations <- cherry_pick(binTab=binTab,
 ##
 if(arguments$write_bins){
    write.log('Writing bins',filename = logFile,append = T,write_to_file = T,type = 'cat')
-   binDir <- paste0(dirname(arguments$outputbasename),'/DASTool_bins')
+   binDir <- paste0(arguments$outputbasename,'_DASTool_bins')
    if(!dir.exists(binDir)){
       system(paste0('mkdir ',binDir))
    }
