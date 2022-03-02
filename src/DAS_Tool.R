@@ -360,6 +360,11 @@ if(summary( tmpfile )$class == 'gzfile'){
 }
 close(tmpfile)
 
+## Proteins:
+if(!is.null(arguments$proteins) && !file.exists(arguments$proteins)){
+   write.log(paste0('File does not exist: ',arguments$proteins),filename = logFile,append = T,write_to_file = T,type = 'stop')
+}
+
 # Check bin set labels
 binSetLabels <- basename(binSets)
 if( !is.null(arguments$labels) ){
@@ -376,7 +381,7 @@ if(any(duplicated(binSetLabels))){
       write.log('Non-unique bin set labels given', filename = logFile,append = T,write_to_file = T,type = 'warning')
    }
    # write.log('Creating bin set labels', filename = logFile,append = T,write_to_file = T,type = 'cat')
-   binSetLabels <- paste0(binSetLabels,'binner.',sprintf("%02d",c(1:length(binSets))))
+   binSetLabels <- paste0(binSetLabels,'.binner.',sprintf("%02d",c(1:length(binSets))))
 }
 
 binSetToLabel <- data.table(inputNo=c(1:length(binSets)),binSetLabel=binSetLabels,binSet=binSets)
