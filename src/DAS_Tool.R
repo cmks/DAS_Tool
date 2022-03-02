@@ -59,6 +59,8 @@ Options:
 Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1).
 "
 
+version <- 'DAS Tool 1.1.4\n'
+
 if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
    docopt:::help(doc)
    quit()
@@ -273,7 +275,6 @@ write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
 ##
 ## Run DAS Tool
 ##
-version <- 'DAS Tool 1.1.4\n'
 
 arguments <- docopt(doc, version = version)
 
@@ -295,7 +296,7 @@ threads <- max(1,as.numeric(arguments$threads))
 
 # Check options
 ## search engine %in% diamond, usearch, blastp?
-searchEngine <- tolower(arguments$search_engine) #%>% gsub('blastp','blast',.)
+searchEngine <- tolower(arguments$search_engine)
 if(!searchEngine %in% c('diamond', 'usearch', 'blastp')){
    write.log(paste0('Unknown argument for --search_engine: ',arguments$search_engine,'\n',
                     'Defaulting to diamond'),filename = logFile,append = T,write_to_file = T,type = 'warning')
@@ -326,7 +327,6 @@ searchEngine <- gsub('blastp','blast',searchEngine) # for SCG-finder blast-scrip
 cmdArgs <- commandArgs(trailingOnly = FALSE)
 scriptDir <- dirname(normalizePath(sub("--file=", "", cmdArgs[grep("--file=", cmdArgs)])))
 scriptDir <- gsub('\\/src$','',scriptDir)
-# print(scriptDir)
 
 # Set default db directory if not defined:
 dbDirectory <- ifelse(arguments$dbDirectory == 'db',
@@ -384,7 +384,6 @@ binSetToLabel <- data.table(inputNo=c(1:length(binSets)),binSetLabel=binSetLabel
 # Check contig2bin files:
 binTab <- data.table()
 for(i in 1:nrow(binSetToLabel)){
-   # print(binSetToLabel[i,binSet])
    if(file.size(binSetToLabel[i,binSet]) == 0){
       ## Warn if contig2bin table is empty, but keep going:
       write.log(paste0('File is empty: ',binSetToLabel[i,binSet]), filename = logFile,append = T,write_to_file = T,type = 'warning')
@@ -546,16 +545,16 @@ if(!file.exists(paste0(proteins,'.bacteria.scg')) || file.size(paste0(proteins,'
 ## Run bin selection
 ##
 write.log('Dereplicating, aggregating, and scoring bins',filename = logFile,append = T,write_to_file = T,type = 'cat')
-bin_evaluations <- cherry_pick(binTab=binTab,
-                                scgTab=scgTab,
-                                contigTab=contigTab,
-                                output_basename=arguments$outputbasename,
-                                score_threshold=as.numeric(arguments$score_threshold),
-                                duplicate_penalty=as.numeric(arguments$duplicate_penalty),
-                                megabin_penalty=as.numeric(arguments$megabin_penalty),
-                                write_unbinned=arguments$write_unbinned,
-                                write_bin_evals=arguments$write_bin_evals,
-                               logFile=logFile)
+cherry_pick(binTab=binTab,
+            scgTab=scgTab,
+            contigTab=contigTab,
+            output_basename=arguments$outputbasename,
+            score_threshold=as.numeric(arguments$score_threshold),
+            duplicate_penalty=as.numeric(arguments$duplicate_penalty),
+            megabin_penalty=as.numeric(arguments$megabin_penalty),
+            write_unbinned=arguments$write_unbinned,
+            write_bin_evals=arguments$write_bin_evals,
+            logFile=logFile)
 
 
 ##
