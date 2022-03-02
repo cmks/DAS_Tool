@@ -220,9 +220,21 @@ NODE_4_length_139685_cov_35.741896	concoct.42
 
 ### Docopt issue
 
-**Problem:** When executing DAS Tool a truncated version of the help message is displayed. This is a known bug of the current version of the `docopt` R package, which occurs if the command-line syntax is violated.
+**Problem:** When executing DAS Tool a truncated version of the help message is displayed (see below). This is a known bug of the current version of the `docopt` R package, which occurs if the command-line syntax is violated.
 ```
+Error: DAS Tool
 
+Usage:
+  DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
+  DAS_Tool [--help]
+
+Options:
+   -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
+   -c --contigs=<contigs>                   Contigs in fasta format.
+   -o --outputbasename=<outputbasename>     Basename of output files.
+   -l --labels=<labels>                     Comma separated list of binning prediction names.
+   --search_engine=<search_engine>          Engine used for single copy gene identification (di
+Execution halted
 ```
 
 **Solution:** Check command line for any typos.
