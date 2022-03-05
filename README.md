@@ -110,7 +110,7 @@ $ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
 - coreutils (only macOS/ OS X): https://www.gnu.org/software/coreutils
 - One of the following search engines:
   - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
-	- BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
+  - BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
   - USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
 
 \*) The free version of USEARCH only can use up to 4Gb RAM. Therefore, the use of DIAMOND or BLAST+ is recommended for big datasets.
