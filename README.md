@@ -75,28 +75,28 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 **Example 1:**  Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix *DASToolRun1*:
 ```
-$ ./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                 sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                 sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                 sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-              -l concoct,maxbin,metabat,tetraESOM
-              -c sample_data/sample.human.gut_contigs.fa
-              -o sample_output/DASToolRun1
+DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun1
 ```
 
 **Example 2:** Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step, output evaluations of input bins, set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix *DASToolRun2*:
 ```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolRun2
-             --proteins sample_output/DASToolRun1_proteins.faa
-             --write_bin_evals
-             --threads 2
-             --score_threshold 0.6
+DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun2 \
+--proteins sample_output/DASToolRun1_proteins.faa \
+--write_bin_evals \
+--threads 2 \
+--score_threshold 0.6 \
 ```
 
 
@@ -168,6 +168,23 @@ Install DAS Tool using Homebrew:
 brew install brewsci/bio/das_tool
 ```
 
+# Docker
+It is also possible to run DAS Tool using Docker. A Docker image can be built using the Dockerfile included in the repository:
+```
+cd ./DAS_Tool-1.x.x
+docker build -t cmks/das_tool .
+```
+To test the build run:
+```
+docker run --rm -it -v $(pwd)/sample_data:/sample_data -v $(pwd)/sample_output:/sample_output cmks/das_tool \
+DAS_Tool -i /sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+/sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+/sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+/sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c /sample_data/sample.human.gut_contigs.fa \
+-o /sample_output/dockerTest
+```
 
 # Preparation of input files
 
@@ -261,12 +278,4 @@ Memory limit of 32-bit process exceeded, 64-bit build required
 makeblastdb did not work for my_proteins.faa, please check your input file
 ```
 
-**Solution:** Use DIAMOND or BLAST as search engine:
-```
-DAS_Tool --search_engine diamond ...
-```
-or
-```
-DAS_Tool --search_engine blast ...
-```
-or install the 64 bit version of USEARCH.
+**Solution:** Use DIAMOND or BLAST as alignment tool (`--search_engine diamond` or `--search_engine blast`):
