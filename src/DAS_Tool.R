@@ -482,6 +482,10 @@ if(!is.null(arguments$proteins)){
                     threads))
    }
 }
+if(!file.exists(proteins) || file.size(proteins) == 0){
+   write.log('Gene prediction failed.',filename = logFile,append = T,write_to_file = T,type = 'stop')
+}
+
 
 # Identify single copy genes
 ## Predict bacterial SCGs
