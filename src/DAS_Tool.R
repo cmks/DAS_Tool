@@ -109,12 +109,15 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
                   paste(output_basename,'_allBins.eval',sep=''),sep='\t',col.names=T,row.names=F,quote=F)
    }
    
-   max_score <- max(binTabEval[,score])
-   
-   if(max_score < score_threshold){
-      write.log(message = paste0('No bins with bin-score >', score_threshold, ' found. Adjust score_threshold to report bins with lower quality.\n Aborting.\n'),filename = logFile)
-      return(-1)
+   if(nrow(binTabEval) == 0 || max(binTabEval[,score]) < score_threshold){
+      write.log(message = paste0('No bins with bin-score >', score_threshold, ' found. Adjust score_threshold to report bins with lower quality.'),
+                filename = logFile,
+                append = T,
+                write_to_file = T,
+                type = 'stop')
    }
+   
+   max_score <- max(binTabEval[,score])
    
    append <- F
    sub_bins <- c()
