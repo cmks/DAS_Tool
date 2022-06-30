@@ -14,29 +14,29 @@ Christian M. K. Sieber, Alexander J. Probst, Allison Sharrar, Brian C. Thomas, M
 DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
 
 Options:
- -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
- -c --contigs=<contigs>                   Contigs in fasta format.
- -o --outputbasename=<outputbasename>     Basename of output files.
- -l --labels=<labels>                     Comma separated list of binning prediction names.
- --search_engine=<search_engine>          Engine used for single copy gene identification (blast/diamond/usearch) [default: diamond].
- -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
-                                          Gene prediction step will be skipped.
- --write_bin_evals                        Write evaluation of input bin sets.
- --write_bins                             Export bins as fasta files.
- --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
- -t --threads=<threads>                   Number of threads to use [default: 1].
- --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
- --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
-                                          Only change if you know what you are doing (0..3) [default: 0.6].
- --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
- --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
- --customDbDir=<customDbDir>              Directory of custom single copy gene database(s). One directory per set. Multiple sets can be comma separated.
- --useCustomDbOnly                        Only use custom single copy gene database(s).
- --customDbFormat                         Format of custom single copy gene database(s) [default: anvio].
- --resume                                 Use existing predicted single copy gene files from a previous run.
- --debug                                  Write debug information to log file.
- -v --version                             Print version number and exit.
- -h --help                                Show this.
+   -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
+   -c --contigs=<contigs>                   Contigs in fasta format.
+   -o --outputbasename=<outputbasename>     Basename of output files.
+   -l --labels=<labels>                     Comma separated list of binning prediction names.
+   --search_engine=<search_engine>          Engine used for single copy gene identification (diamond/blastp/usearch) [default: diamond].
+   -p --proteins=<proteins>                 Predicted proteins (optional) in prodigal fasta format (>contigID_geneNo).
+                                            Gene prediction step will be skipped.
+   --write_bin_evals                        Write evaluation of input bin sets.
+   --write_bins                             Export bins as fasta files.
+   --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
+   -t --threads=<threads>                   Number of threads to use [default: 1].
+   --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
+   --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
+                                            Only change if you know what you are doing (0..3) [default: 0.6].
+   --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
+   --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
+   --customDbDir=<customDbDir>              Directory of custom single copy gene database(s). One directory per set. Multiple sets can be comma separated.
+   --useCustomDbOnly                        Only use custom single copy gene database(s).
+   --customDbFormat                         Format of custom single copy gene database(s) [default: anvio].
+   --resume                                 Use existing predicted single copy gene files from a previous run.
+   --debug                                  Write debug information to log file.
+   -v --version                             Print version number and exit.
+   -h --help                                Show this.
 
 ```
 
@@ -67,10 +67,9 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 ```
 
 ### Output files
-- Summary of output bins including quality and completeness estimates (DASTool_summary.txt).
-- Contigs to bin file of output bins (DASTool_contigs2bin.txt).
-- Quality and completeness estimates of input bin sets, if ```--write_bin_evals 1```  is set ([method].eval).
-- Plots showing the amount of high quality bins and score distribution of bins per method, if ```--create_plots 1``` is set (DASTool_hqBins.pdf, DASTool_scores.pdf).
+- Summary of output bins including quality and completeness estimates (*_DASTool_summary.tsv).
+- Contigs to bin file of output bins (*_DASTool_contigs2bin.tsv).
+- Quality and completeness estimates of input bin sets, if ```--write_bin_evals```  is set (*_allBins.eval).
 - Bins in fasta format if ```--write_bins``` is set (DASTool_bins).
 
 
@@ -79,43 +78,43 @@ MANKIPRVPVREQDPKVRATNFEEVCYGYNVEEATLEASRCLNCKNPRCVAACPVN...
 
 **Example 1:**  Run DAS Tool on binning predictions of MetaBAT, MaxBin, CONCOCT and tetraESOMs. Output files will start with the prefix *DASToolRun1*:
 ```
-$ ./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                 sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                 sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                 sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-              -l concoct,maxbin,metabat,tetraESOM
-              -c sample_data/sample.human.gut_contigs.fa
-              -o sample_output/DASToolRun1
+DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun1
 ```
 
 **Example 2:** Run DAS Tool again with different parameters. Use the proteins predicted in Example 1 to skip the gene prediction step, output evaluations of input bins, set the number of threads to 2 and score threshold to 0.6. Output files will start with the prefix *DASToolRun2*:
 ```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolRun2
-             --proteins sample_output/DASToolRun1_proteins.faa
-             --write_bin_evals
-             --threads 2
-             --score_threshold 0.6
+DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun2 \
+--proteins sample_output/DASToolRun1_proteins.faa \
+--write_bin_evals \
+--threads 2 \
+--score_threshold 0.6 \
 ```
 
 
 # Dependencies
 
 - [R](https://www.r-project.org) (>= 3.2.3)
-- R-packages: [data.table](https://CRAN.R-project.org/package=data.table) (>= 1.9.6), [magrittr](https://CRAN.R-project.org/package=magrittr) (>= 2.0.1), [docopt](https://CRAN.R-project.org/package=docopt) (>= 0.7.1), [rhmmer](https://CRAN.R-project.org/package=rhmmer) (>= 0.1.0)
+- R-packages: [data.table](https://CRAN.R-project.org/package=data.table) (>= 1.9.6), [magrittr](https://CRAN.R-project.org/package=magrittr) (>= 2.0.1), [docopt](https://CRAN.R-project.org/package=docopt) (>= 0.7.1)
 - [ruby](https://www.ruby-lang.org) (>= v2.3.1)
 - [Pullseq](https://github.com/bcthomas/pullseq) (>= 1.0.2)
 - [Prodigal](https://github.com/hyattpd/Prodigal) (>= 2.6.3)
 - [coreutils](https://www.gnu.org/software/coreutils) (only macOS/ OS X)
 - One of the following search engines:
-  - [DIAMOND](https://ab.inf.uni-tuebingen.de/software/diamond) (>= 0.9.14)
-  - [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi) (>= 2.5.0)
-  - [USEARCH](http://www.drive5.com/usearch/download.html)* (>= 8.1)
+  - DIAMOND (>= 0.9.14): https://ab.inf.uni-tuebingen.de/software/diamond
+  - BLAST+ (>= 2.5.0): https://blast.ncbi.nlm.nih.gov/Blast.cgi
+  - USEARCH* (>= 8.1): http://www.drive5.com/usearch/download.html
 - When using custom SCG libraries:
   - [HMMER3](http://hmmer.org) (>= 3.3.2)
 
@@ -139,7 +138,7 @@ unzip ./db.zip -d db
 
 Installation of dependent R-packages:
 ```
-R -e "install.packages(c('data.table','magrittr','docopt','rhmmer'), repos='http://cran.us.r-project.org')"
+R -e "install.packages(c('data.table','magrittr','docopt'), repos='http://cran.us.r-project.org')"
 ```
 
 # Installation using conda or homebrew
@@ -169,6 +168,23 @@ Install DAS Tool using Homebrew:
 brew install brewsci/bio/das_tool
 ```
 
+# Docker
+It is also possible to run DAS Tool using Docker. A Docker image can be built using the Dockerfile included in the repository:
+```
+cd ./DAS_Tool-1.x.x
+docker build -t cmks/das_tool .
+```
+To test the build run:
+```
+docker run --rm -it -v $(pwd)/sample_data:/sample_data -v $(pwd)/sample_output:/sample_output cmks/das_tool \
+DAS_Tool -i /sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+/sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+/sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+/sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c /sample_data/sample.human.gut_contigs.fa \
+-o /sample_output/dockerTest
+```
 
 # Preparation of input files
 
@@ -229,33 +245,55 @@ Using the ` --customDbDir` option, one or multiple SCG libraries (separated by `
 
 **Example 1:** Run DAS Tool using with an additional custom SGC library (e.g. from https://github.com/merenlab/anvio/tree/master/anvio/data/hmm):
 ```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolCustomScgRun01
-             --threads 2
-             --customDbDir db/Protista_83
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+ -l concoct,maxbin,metabat,tetraESOM \
+ -c sample_data/sample.human.gut_contigs.fa \
+ -o sample_output/DASToolCustomScgRun01 \
+ --threads 2 \
+ --customDbDir db/Protista_83
 ```
 
 **Example 2:** Run DAS Tool using *only* custom SGC libraries:
 ```
-$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,
-                sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,
-                sample_data/sample.human.gut_metabat_contigs2bin.tsv,
-                sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
-             -l concoct,maxbin,metabat,tetraESOM
-             -c sample_data/sample.human.gut_contigs.fa
-             -o sample_output/DASToolCustomScgRun02
-             --threads 2
-             --customDbDir db/Bacteria_71,db/Archaea_76,db/Protista_83
-             --useCustomDbOnly
+$ ./DAS_Tool -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolCustomScgRun02 \
+--threads 2 \
+--customDbDir db/Bacteria_71,db/Archaea_76,db/Protista_83 \
+--useCustomDbOnly
 ```
 
 
-# Trouble shooting and FAQs
+# Troubleshooting/ known issues
+
+### Docopt issue
+
+**Problem:** When executing DAS Tool a truncated version of the help message is displayed (see below). This is a known bug of the current version of the `docopt` R package, which occurs if the command-line syntax is violated.
+```
+Error: DAS Tool
+
+Usage:
+  DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
+  DAS_Tool [--help]
+
+Options:
+   -i --bins=<contig2bin>                   Comma separated list of tab separated contigs to bin tables.
+   -c --contigs=<contigs>                   Contigs in fasta format.
+   -o --outputbasename=<outputbasename>     Basename of output files.
+   -l --labels=<labels>                     Comma separated list of binning prediction names.
+   --search_engine=<search_engine>          Engine used for single copy gene identification (di
+Execution halted
+```
+
+**Solution:** Check command line for any typos.
+
 
 ### Dependencies not found
 
@@ -277,12 +315,4 @@ Memory limit of 32-bit process exceeded, 64-bit build required
 makeblastdb did not work for my_proteins.faa, please check your input file
 ```
 
-**Solution:** Use DIAMOND or BLAST as search engine:
-```
-DAS_Tool --search_engine diamond ...
-```
-or
-```
-DAS_Tool --search_engine blast ...
-```
-or install the 64 bit version of USEARCH.
+**Solution:** Use DIAMOND or BLAST as alignment tool (`--search_engine diamond` or `--search_engine blast`):
