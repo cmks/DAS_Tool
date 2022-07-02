@@ -292,8 +292,8 @@ read_hmmer <- function(file){
                         'integer','integer','integer','integer',
                         'integer','character'))
    
-   dt <- read.table(file,sep='\n',comment.char = '#',col.names=c('line')) %>% 
-      data.table()  %>%
+   dt <- fread(file,sep='\n',header=F,col.names=c('line')) %>% 
+      .[!grepl('^#',line)] %>% 
       .[,line:=sub(line,pattern = sprintf("(%s) *(.*)",paste0(rep("\\S+", nrow(colTypes)), collapse = " +")), replacement = "\\1", perl = TRUE)] %>%
       .[, (colTypes[,col_names]) := tstrsplit(line, " +")] %>% 
       .[, (colTypes[type != 'character',col_names]) := lapply(.SD, as.numeric), .SDcols = colTypes[type != 'character',col_names]] %>% 
