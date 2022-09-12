@@ -88,7 +88,7 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    
    # join tables
    scgTab <- scgTab[ contig_id %in% binTab[, contig_id]]
-   binTabScg <- binTab[scgTab]
+   binTabScg <- binTab[scgTab,allow.cartesian = T]
    binTabContig <- contigTab[binTab]
    
    # score bins
