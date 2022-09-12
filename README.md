@@ -96,7 +96,7 @@ sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
 --proteins sample_output/DASToolRun1_proteins.faa \
 --write_bin_evals \
 --threads 2 \
---score_threshold 0.6 \
+--score_threshold 0.6
 ```
 
 
