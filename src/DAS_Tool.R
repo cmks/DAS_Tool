@@ -161,7 +161,6 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
       
       # remove contigs of highest scoring bin binTabScg
       affected_bins <- unique(binTabScg[ contig_id %in% topContig2Bin[,contig_id], bin_id ])
-      binTabScg <- binTabScg[ !contig_id %in% topContig2Bin[,contig_id] ]
       binTabScg[ bin_id %in% affected_bins, bin_id:= paste(gsub('_sub$','',bin_id),'sub',sep='_')]
       binTabScg <- binTabScg[ !contig_id %in% topContig2Bin[,contig_id] ]
       
