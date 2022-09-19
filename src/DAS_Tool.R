@@ -43,7 +43,7 @@ Options:
                                             Gene prediction step will be skipped.
    --write_bin_evals                        Write evaluation of input bin sets.
    --write_bins                             Export bins as fasta files.
-   --write_unbinned                         Report unbinned contigs as 'unbinned'.
+   --write_unbinned                         Write unbinned contigs.
    -t --threads=<threads>                   Number of threads to use [default: 1].
    --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
    --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
@@ -59,7 +59,7 @@ Options:
 Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1).
 "
 
-version <- 'DAS Tool 1.1.5'
+version <- 'DAS Tool 1.1.5\n'
 
 if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
    docopt:::help(doc)
@@ -283,7 +283,7 @@ arguments <- docopt(doc, version = version)
 
 # Existence and permissions of output directory
 if(! dir.exists(dirname(arguments$outputbasename))){
-   write.log(paste0('Output directory does not exist. Attempting to create: ', dirname(arguments$outputbasename)), 
+   write.log(paste0('Output directory does not exist. Attempting to create: ', dirname(arguments$outputbasename),'\n'), 
              filename = '',append = T,write_to_file = F,type = 'warning')
    system(paste0('mkdir -p ',dirname(arguments$outputbasename)))
    
@@ -295,7 +295,7 @@ if(! dir.exists(dirname(arguments$outputbasename))){
 
 # Init log file
 logFile <- paste0(arguments$outputbasename,'_DASTool.log')
-write.log(version,filename = logFile,append = F,write_to_file = T,type = 'cat')
+write.log(gsub('\n','',version),filename = logFile,append = F,write_to_file = T,type = 'cat')
 write.log(paste(Sys.time()),filename = logFile,append = T,write_to_file = T)
 write.log('\nParameters:',filename = logFile,append = T,write_to_file = T)
 argsTab <- data.table(opt=names(arguments),args=arguments) %>% 
@@ -328,7 +328,7 @@ if(any(dependencies[ path == '', dependency ] %in% min_dependencies)){
                     paste0(dependencies[ path == '' ] %>% .[dependency %in% min_dependencies, dependency] ,collapse = ', ')),filename = logFile,append = T,write_to_file = T,type = 'stop')
 }
 
-write.log('\nDependencies:',filename = logFile,append = T,write_to_file = T)
+write.log('Dependencies:',filename = logFile,append = T,write_to_file = T)
 write.log(dependencies,filename = logFile,append = T,write_to_file = T,type = 'cat')
 
 searchEngine <- gsub('blastp','blast',searchEngine) # for SCG-finder blast-script
@@ -581,7 +581,7 @@ if(nrow(scgTab) == 0){
 }
 
 if(arguments$debug){
-   write.log('scgTab:', filename = logFile,append = T,write_to_file = T,type = 'debug')
+   write.log('\nscgTab:', filename = logFile,append = T,write_to_file = T,type = 'debug')
    write.log(scgTab, filename = logFile,append = T,write_to_file = T,type = 'debug')
 }
 
