@@ -62,11 +62,10 @@ RUN cd /tmp && \
   chmod +x /bin/usearch
 
 # DAS Tool
-ADD DAS_Tool db.zip /bin
-ADD src /bin/src
-# ADD sample_data /sample_data
-# ADD sample_output /sample_output
-RUN unzip /bin/db.zip -d /bin/db && \
+RUN mkdir -p /opt/DAS_Tool
+ADD ./ /opt/DAS_Tool
+RUN ln -s /opt/DAS_Tool/DAS_Tool /bin/DAS_Tool
+RUN unzip -o /opt/DAS_Tool/db.zip -d /opt/DAS_Tool/db && \
   R -e "install.packages(c('data.table','magrittr','docopt'), repos='http://cran.us.r-project.org')" && \
-  rm /bin/db.zip && \
-  chmod +x /bin/DAS_Tool
+  rm /opt/DAS_Tool/db.zip && \
+  chmod +x /opt/DAS_Tool/DAS_Tool
