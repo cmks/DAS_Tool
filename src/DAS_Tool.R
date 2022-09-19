@@ -29,7 +29,7 @@ doc <- "DAS Tool
 
 Usage:
   DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
-  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--write_bin_evals] [--create_plots] [--write_bins] [--write_unbinned] [--resume] [--debug]
+  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--write_bin_evals] [--write_bins] [--write_unbinned] [--resume] [--debug]
   DAS_Tool [--version]
   DAS_Tool [--help]
 
@@ -43,7 +43,7 @@ Options:
                                             Gene prediction step will be skipped.
    --write_bin_evals                        Write evaluation of input bin sets.
    --write_bins                             Export bins as fasta files.
-   --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
+   --write_unbinned                         Report unbinned contigs as 'unbinned'.
    -t --threads=<threads>                   Number of threads to use [default: 1].
    --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
    --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
@@ -59,7 +59,7 @@ Options:
 Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1).
 "
 
-version <- 'DAS Tool 1.1.4\n'
+version <- 'DAS Tool 1.1.4'
 
 if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
    docopt:::help(doc)
@@ -281,9 +281,20 @@ write.log <- function(message,append=T,filename,write_to_file=T,type='none'){
 
 arguments <- docopt(doc, version = version)
 
+# Existence and permissions of output directory
+if(! dir.exists(dirname(arguments$outputbasename))){
+   write.log(paste0('Output directory does not exist. Attempting to create: ', dirname(arguments$outputbasename)), 
+             filename = '',append = T,write_to_file = F,type = 'warning')
+   system(paste0('mkdir -p ',dirname(arguments$outputbasename)))
+   
+   if(! dir.exists(dirname(arguments$outputbasename))){
+      write.log(paste0('Failed to create output directory: ', dirname(arguments$outputbasename)), 
+                filename = '',append = T,write_to_file = F,type = 'stop')
+   }
+}
+
 # Init log file
 logFile <- paste0(arguments$outputbasename,'_DASTool.log')
-cat('\n')
 write.log(version,filename = logFile,append = F,write_to_file = T,type = 'cat')
 write.log(paste(Sys.time()),filename = logFile,append = T,write_to_file = T)
 write.log('\nParameters:',filename = logFile,append = T,write_to_file = T)
@@ -377,7 +388,7 @@ if( !is.null(arguments$labels) ){
 }
 if(any(duplicated(binSetLabels))){
    if( !is.null(arguments$labels) ){
-      write.log('Non-unique bin set labels given', filename = logFile,append = T,write_to_file = T,type = 'warning')
+      write.log('Non-unique bin set labels given. Renaming bin set labels.', filename = logFile,append = T,write_to_file = T,type = 'warning')
    }
    # write.log('Creating bin set labels', filename = logFile,append = T,write_to_file = T,type = 'cat')
    binSetLabels <- paste0(binSetLabels,'.binner.',sprintf("%02d",c(1:length(binSets))))
@@ -399,24 +410,22 @@ for(i in 1:nrow(binSetToLabel)){
    }
 }
 
+if(arguments$debug){
+   write.log('binTab:', filename = logFile,append = T,write_to_file = T,type = 'debug')
+   write.log(binTab, filename = logFile,append = T,write_to_file = T,type = 'debug')
+}
+
 ## Stop if all contig2bin tables are empty:
 if(nrow(binTab) == 0){
    write.log('No bins provided. Check contig2bin files.', filename = logFile,append = T,write_to_file = T,type = 'stop')
 }
 
-# Check for duplicate bin-IDs
+## Check for duplicate bin-IDs
 if(nrow(unique(binTab[,.(binner_name,bin_id)])) > length(unique(binTab[,bin_id]))){
    binTab[,bin_id:=paste0(binner_name,'_',bin_id)]
    write.log(paste0('Non-unique bin-ids given. Renaming bin-ids.'), filename = logFile,append = T,write_to_file = T,type = 'warning')
 }
 
-
-# Existence and permissions of output directory
-if(! dir.exists(dirname(arguments$outputbasename))){
-   write.log(paste0('Output directory does not exist. Creating: ', dirname(arguments$outputbasename)), 
-             filename = logFile,append = T,write_to_file = T,type = 'warning')
-   system(paste0('mkdir ',dirname(arguments$outputbasename)))
-}
 
 # Existence of database directory
 if( !file.exists(paste0(dbDirectory,'bac.all.faa')) || 
@@ -446,6 +455,28 @@ system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
 
 contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),header=F,col.names=c('contig_id','contig_length'),sep='\t') %>% 
    .[,contig_id:=gsub(' .*','',contig_id)]
+
+if(arguments$debug){
+   write.log('Assembly stats:', filename = logFile,append = T,write_to_file = T,type = 'debug')
+   assemblyStatsTab <- data.table(contigs=nrow(contigTab),
+                                  size=sum(contigTab[,contig_length]),
+                                  median=median(contigTab[,contig_length]),
+                                  min=min(contigTab[,contig_length]),
+                                  max=max(contigTab[,contig_length]),
+                                  N50=calc_N50(contigTab[,contig_id],contigTab[,contig_length]))
+   write.log(colnames(assemblyStatsTab),filename = logFile,append = T,write_to_file = T,type = 'debug')
+   write.log(assemblyStatsTab,filename = logFile,append = T,write_to_file = T,type = 'debug')
+}
+
+## Check for duplicate contig-IDs
+if( any(duplicated(contigTab[,contig_id]))){
+   duplicatedContigs <- contigTab[duplicated(contigTab[,contig_id])]
+   write.log(paste0('Error: Duplcate contig-IDs found in assembly: ', nrow(duplicatedContigs)), 
+             filename = logFile,append = T,write_to_file = T,type = 'cat')
+   write.log(paste0(paste0(head(duplicatedContigs[,contig_id],5),collapse = ',\n'), ifelse(nrow(duplicatedContigs) >5,',...','')),
+             filename = logFile,append = T,write_to_file = T,type = 'cat')
+   exit()
+}
 
 ## Check if bin-set contigs are in assembly:
 missingContigs <- binTab[!contig_id %in% contigTab[,contig_id]]
@@ -499,7 +530,7 @@ if(!arguments$resume || !file.exists(bacteria_scg_out)){
                  dbDirectory,'/bac.scg.faa ',
                  dbDirectory,'/bac.scg.lookup ',
                  threads,
-                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile, ' > /dev/null 2>&1'),' > /dev/null 2>&1')))
    if(file.exists(paste0(proteins,'.scg')) && file.size(paste0(proteins,'.scg')) > 0){
       system(paste0('mv ',proteins,'.scg ',bacteria_scg_out))
       scgTab <- rbind(scgTab,
@@ -526,7 +557,7 @@ if(!arguments$resume || !file.exists(archaea_scg_out)){
                  dbDirectory,'/arc.scg.faa ',
                  dbDirectory,'/arc.scg.lookup ',
                  threads,
-                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile),' > /dev/null 2>&1')))
+                 ifelse(arguments$debug,paste0(' 2>&1 | tee -a ',logFile, ' > /dev/null 2>&1'),' > /dev/null 2>&1')))
    if(file.exists(paste0(proteins,'.scg')) && file.size(paste0(proteins,'.scg')) > 0){
       system(paste0('mv ',proteins,'.scg ',archaea_scg_out))
       scgTab <- rbind(scgTab,
@@ -549,6 +580,10 @@ if(nrow(scgTab) == 0){
              filename = logFile,append = T,write_to_file = T,type = 'stop')
 }
 
+if(arguments$debug){
+   write.log('scgTab:', filename = logFile,append = T,write_to_file = T,type = 'debug')
+   write.log(scgTab, filename = logFile,append = T,write_to_file = T,type = 'debug')
+}
 
 ##
 ## Run bin selection
