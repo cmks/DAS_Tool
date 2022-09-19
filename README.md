@@ -23,7 +23,7 @@ Options:
                                             Gene prediction step will be skipped.
    --write_bin_evals                        Write evaluation of input bin sets.
    --write_bins                             Export bins as fasta files.
-   --write_unbinned                         Export unbinned contigs as fasta file (--write_bins needs to be set).
+   --write_unbinned                         Write unbinned contigs.
    -t --threads=<threads>                   Number of threads to use [default: 1].
    --score_threshold=<score_threshold>      Score threshold until selection algorithm will keep selecting bins (0..1) [default: 0.5].
    --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
