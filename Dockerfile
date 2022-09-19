@@ -63,7 +63,11 @@ RUN cd /tmp && \
 
 # DAS Tool
 RUN mkdir -p /opt/DAS_Tool
-ADD ./ /opt/DAS_Tool
+ADD ./DAS_Tool /opt/DAS_Tool/DAS_Tool
+ADD ./src /opt/DAS_Tool/src
+ADD ./db.zip /opt/DAS_Tool/db.zip
+# ADD ./sample_data /opt/DAS_Tool/sample_data
+# ADD ./sample_output /opt/DAS_Tool/sample_output
 RUN ln -s /opt/DAS_Tool/DAS_Tool /bin/DAS_Tool
 RUN unzip -o /opt/DAS_Tool/db.zip -d /opt/DAS_Tool/db && \
   R -e "install.packages(c('data.table','magrittr','docopt'), repos='http://cran.us.r-project.org')" && \
