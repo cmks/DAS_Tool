@@ -405,7 +405,8 @@ for(i in 1:nrow(binSetToLabel)){
    }else{
       ## Read contig2bin table and concatenate:
       dt <- fread(binSetToLabel[i,binSet],header=F,col.names=c('contig_id','bin_id'),sep='\t') %>% 
-         .[,binner_name:=binSetToLabel[i,binSetLabel]]
+         .[,binner_name:=binSetToLabel[i,binSetLabel]] %>% 
+         .[,contig_id:=gsub(' .*','',contig_id)] # trim contig-ids after first whitespace
       binTab <- rbind(binTab,dt)
    }
 }
