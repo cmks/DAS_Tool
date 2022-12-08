@@ -407,7 +407,11 @@ for(i in 1:nrow(binSetToLabel)){
       write.log(paste0('File is empty: ',binSetToLabel[i,binSet]), filename = logFile,append = T,write_to_file = T,type = 'warning')
    }else{
       ## Read contig2bin table and concatenate:
-      dt <- fread(binSetToLabel[i,binSet],header=F,col.names=c('contig_id','bin_id'),sep='\t') %>% 
+      dt <- fread(binSetToLabel[i,binSet],
+                  sep='\t',
+                  header=F,
+                  colClasses=c(V1='character',V2='character'),
+                  col.names=c('contig_id','bin_id')) %>% 
          .[,binner_name:=binSetToLabel[i,binSetLabel]] %>% 
          .[,contig_id:=gsub(' .*','',contig_id)] # trim contig-ids after first whitespace
       binTab <- rbind(binTab,dt)
@@ -457,7 +461,11 @@ system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
               arguments$contigs,' ',
               arguments$outputbasename,'.seqlength'))
 
-contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),header=F,col.names=c('contig_id','contig_length'),sep='\t') %>% 
+contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),
+                   sep='\t',
+                   header=F,
+                   colClasses=c(V1='character',V2='integer'),
+                   col.names=c('contig_id','contig_length')) %>% 
    .[,contig_id:=gsub(' .*','',contig_id)]
 
 if(arguments$debug){
@@ -538,7 +546,9 @@ if(!arguments$resume || !file.exists(bacteria_scg_out)){
    if(file.exists(paste0(proteins,'.scg')) && file.size(paste0(proteins,'.scg')) > 0){
       system(paste0('mv ',proteins,'.scg ',bacteria_scg_out))
       scgTab <- rbind(scgTab,
-                      fread(paste0(proteins,'.bacteria.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
+                      fread(paste0(proteins,'.bacteria.scg'),header=F,sep='\t',
+                            colClasses=c(V1='character',V2='character'),
+                            col.names=c('protein_id','protein_name')) %>% 
                          .[,protein_set:='bacteria'] %>% 
                          .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                          .[,protein_set_size:=51])
@@ -565,7 +575,9 @@ if(!arguments$resume || !file.exists(archaea_scg_out)){
    if(file.exists(paste0(proteins,'.scg')) && file.size(paste0(proteins,'.scg')) > 0){
       system(paste0('mv ',proteins,'.scg ',archaea_scg_out))
       scgTab <- rbind(scgTab,
-                      fread(paste0(proteins,'.archaea.scg'),header=F,col.names=c('protein_id','protein_name'),sep='\t') %>% 
+                      fread(paste0(proteins,'.archaea.scg'),header=F,sep='\t',
+                            colClasses=c(V1='character',V2='character'),
+                            col.names=c('protein_id','protein_name')) %>% 
                         .[,protein_set:='archaea'] %>% 
                         .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
                         .[,protein_set_size:=38])
