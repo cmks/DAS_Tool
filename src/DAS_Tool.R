@@ -80,6 +80,7 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    # score_threshold <- max(score_threshold,-42)
    internal_ratio_threshold <- 0.0
    internal_score_threshold <- min(0.0,score_threshold)
+   max_additional_iterations <- 10
    
    # set keys
    setkey(binTab,'contig_id')
@@ -121,8 +122,9 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    
    append <- F
    sub_bins <- c()
+   additianal_iterations <- 0
    
-   while(max_score > internal_score_threshold){
+   while(max_score > internal_score_threshold && additianal_iterations <= max_additional_iterations ){
       
       # identify highest scoring bin
       topBin <- binTabEval[ 1 ]
@@ -156,6 +158,7 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
          if(write_unbinned){
             topContig2Bin[,bin_id:='unbinned'] %>% 
                fwrite(paste0(output_basename,'_DASTool_contig2bin.tsv'),sep='\t',col.names=F,row.names = F,quote=F,append = append)
+            additianal_iterations <- additianal_iterations+1
          }
       }
       
