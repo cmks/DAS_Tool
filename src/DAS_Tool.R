@@ -59,7 +59,7 @@ Options:
 Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1).
 "
 
-version <- 'DAS Tool 1.1.5\n'
+version <- 'DAS Tool 1.1.6\n'
 
 if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
    docopt:::help(doc)
