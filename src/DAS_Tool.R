@@ -559,6 +559,18 @@ if(!arguments$resume || !file.exists(bacteria_scg_out)){
 }else{
    write.log(paste0('Skipping SCG prediction for SCG set: bacteria','\n\t using ',bacteria_scg_out),
              filename = logFile,type = 'cat')
+   if(file.exists(bacteria_scg_out) && file.size(bacteria_scg_out) > 0){
+      scgTab <- rbind(scgTab,
+                      fread(paste0(proteins,'.bacteria.scg'),header=F,sep='\t',
+                            colClasses=c(V1='character',V2='character'),
+                            col.names=c('protein_id','protein_name')) %>% 
+                         .[,protein_set:='bacteria'] %>% 
+                         .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
+                         .[,protein_set_size:=51])
+   }else{
+      write.log(paste0('Empty table for SCG set: bacteria: ', bacteria_scg_out), 
+                filename = logFile,append = T,write_to_file = T,type = 'warning')
+   }
 }
 
 ## Predict archaeal SCGs
@@ -588,6 +600,18 @@ if(!arguments$resume || !file.exists(archaea_scg_out)){
 }else{
    write.log(paste0('Skipping SCG prediction for SCG set: archaea','\n\t using ',archaea_scg_out),
              filename = logFile,type = 'cat')
+   if(file.exists(archaea_scg_out) && file.size(archaea_scg_out) > 0){
+      scgTab <- rbind(scgTab,
+                      fread(paste0(proteins,'.archaea.scg'),header=F,sep='\t',
+                            colClasses=c(V1='character',V2='character'),
+                            col.names=c('protein_id','protein_name')) %>% 
+                         .[,protein_set:='archaea'] %>% 
+                         .[,contig_id:=gsub('_[0-9]+$','',protein_id)] %>% 
+                         .[,protein_set_size:=38])
+   }else{
+      write.log(paste0('Empty table for SCG set: archaea: ', archaea_scg_out), 
+                filename = logFile,append = T,write_to_file = T,type = 'warning')
+   }
 }
 
 ## Stop if no single copy genes were predicted:
