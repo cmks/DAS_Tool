@@ -343,6 +343,10 @@ dbDirectory <- ifelse(arguments$dbDirectory == 'db',
                        paste0(scriptDir,'/','db/'),
                        arguments$dbDirectory)
 
+# add trailing slash if needed
+if (!endsWith(dbDirectory, '/')) {
+    dbDirectory <- paste0(dbDirectory, '/')
+}
 
 ##
 ## Check files and directories
