@@ -159,6 +159,8 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
             topContig2Bin[,bin_id:='unbinned'] %>% 
                fwrite(paste0(output_basename,'_DASTool_contig2bin.tsv'),sep='\t',col.names=F,row.names = F,quote=F,append = append)
             additianal_iterations <- additianal_iterations+1
+            
+            write.log(paste0('Additional iteration no: ',additianal_iterations),filename = logFile,type = 'cat')
          }
       }
       
@@ -460,6 +462,8 @@ write.log('Analyzing assembly',filename = logFile,append = T,write_to_file = T,t
 system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
               arguments$contigs,' ',
               arguments$outputbasename,'.seqlength'))
+
+# write.log('SKIPPING CONTIG LENGTH CALC!!!',filename = logFile,append = T,write_to_file = T,type = 'warning')
 
 contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),
                    sep='\t',
