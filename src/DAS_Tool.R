@@ -192,7 +192,8 @@ calc_N50 <- function(contig_id,contig_length){
    seq_len <- data.table(contig_id,contig_length) %>% 
       .[!duplicated(contig_id)] %>% 
       .[order(contig_length,decreasing = T)] %>% 
-      .[,contig_length]
+      .[,contig_length] %>% 
+     as.numeric()
    
    N50 <- seq_len[cumsum(seq_len) > sum(seq_len)/2][1] 
    
@@ -205,7 +206,8 @@ calc_bins_size <- function(contig_id,contig_length){
    binSize <- data.table(contig_id,contig_length) %>%
       .[!duplicated(contig_id)] %>% 
       .[,contig_length] %>% 
-      sum()
+      sum() %>% 
+     as.numeric()
    
    return(binSize)
 }
@@ -233,9 +235,9 @@ score_bins <- function(bin_tab_scg,bin_tab_contig,b=.6,c=.5){
       .[,additionalSCG:= (sumSCG - uniqueSCG)] %>% 
       setkey(bin_id,binner_name)
    
-   bin_tab_contig_eval <- bin_tab_contig[,.(binSize=calc_bins_size(contig_id,contig_length),
-                                            contigN50=calc_N50(contig_id,contig_length),
-                                            nContig=.N),by=c('bin_id','binner_name')] %>% 
+   bin_tab_contig_eval <- bin_tab_contig[,.(binSize=as.numeric(calc_bins_size(contig_id,contig_length)),
+                                            contigN50=as.numeric(calc_N50(contig_id,contig_length)),
+                                            nContig=as.numeric(.N)),by=c('bin_id','binner_name')] %>% 
       setkey(bin_id,binner_name)
    
    bin_tab_eval <- bin_tab_contig_eval[bin_tab_scg_eval] %>% 
@@ -469,7 +471,7 @@ if(arguments$debug){
    write.log('Assembly stats:', filename = logFile,append = T,write_to_file = T,type = 'debug')
    assemblyStatsTab <- data.table(contigs=nrow(contigTab),
                                   size=sum(contigTab[,contig_length]),
-                                  median=median(contigTab[,contig_length]),
+                                  median=as.double(median(contigTab[,contig_length])),
                                   min=min(contigTab[,contig_length]),
                                   max=max(contigTab[,contig_length]),
                                   N50=calc_N50(contigTab[,contig_id],contigTab[,contig_length]))
