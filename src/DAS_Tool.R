@@ -49,6 +49,7 @@ Options:
    --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
                                             Only change if you know what you are doing (0..3) [default: 0.6].
    --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
+   --max_iter_post_threshold                Maximum number of iterations after reaching score threshold [default: 10].
    --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
    --resume                                 Use existing predicted single copy gene files from a previous run.
    --debug                                  Write debug information to log file.
@@ -59,7 +60,7 @@ Options:
 Please cite: Sieber et al., 2018, Nature Microbiology (https://doi.org/10.1038/s41564-018-0171-1).
 "
 
-version <- 'DAS Tool 1.1.7-b.1\n'
+version <- 'DAS Tool 1.1.7-b.2\n'
 
 if(length(commandArgs(trailingOnly = TRUE)) == 0L) {
    docopt:::help(doc)
@@ -74,13 +75,13 @@ suppressMessages(suppressWarnings(library(data.table, warn.conflicts = F, quietl
 suppressMessages(suppressWarnings(library(magrittr, warn.conflicts = F, quietly = T)))
 suppressMessages(suppressWarnings(library(docopt, warn.conflicts = F, quietly = T)))
 
-cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,write_unbinned,write_bin_evals,logFile){
+cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,duplicate_penalty,megabin_penalty,max_iter_post_threshold,write_unbinned,write_bin_evals,logFile){
    
    # thresholds:
    # score_threshold <- max(score_threshold,-42)
    internal_ratio_threshold <- 0.0
    internal_score_threshold <- min(0.0,score_threshold)
-   max_additional_iterations <- 10
+   post_thresh_iter <- 10
    
    # set keys
    setkey(binTab,'contig_id')
@@ -122,16 +123,15 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
    
    append <- F
    sub_bins <- c()
-   additianal_iterations <- 0
+   post_thresh_iter <- 0
    
-   while(max_score > internal_score_threshold && additianal_iterations <= max_additional_iterations ){
+   while(max_score > internal_score_threshold && post_thresh_iter <= max_iter_post_threshold ){
       
       # identify highest scoring bin
       topBin <- binTabEval[ 1 ]
       
       # identify contigs of highest scoring bin
       topContig2Bin <- binTabContig[bin_id == topBin[,bin_id],.(contig_id,bin_id)]
-      
       
       if(max_score >= score_threshold && max(binTabEval[,completeness]) > internal_ratio_threshold){
          
@@ -154,13 +154,13 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
          
          append <- T
       }else{
+        post_thresh_iter <- post_thresh_iter+1
+        
          # write unbinned contigs if bin-score is below threshold
          if(write_unbinned){
             topContig2Bin[,bin_id:='unbinned'] %>% 
                fwrite(paste0(output_basename,'_DASTool_contig2bin.tsv'),sep='\t',col.names=F,row.names = F,quote=F,append = append)
-            additianal_iterations <- additianal_iterations+1
             
-            write.log(paste0('Additional iteration no: ',additianal_iterations),filename = logFile,type = 'cat')
          }
       }
       
@@ -172,8 +172,15 @@ cherry_pick <- function(binTab,scgTab,contigTab,output_basename,score_threshold,
       binTabScg <- binTabScg[ !contig_id %in% topContig2Bin[,contig_id] ]
       
       # update scores of remaining bins
-      binTabEval <- score_bins(bin_tab_scg = binTabScg, bin_tab_contig = binTabContig, b = duplicate_penalty,c = megabin_penalty)
-      
+      # binTabEval <- score_bins(bin_tab_scg = binTabScg, bin_tab_contig = binTabContig, b = duplicate_penalty,c = megabin_penalty)
+      # fwrite(binTabEval,paste0(output_basename,'_DASTool_binTabEval_OLD','_iter_',iter,'.tsv'),sep='\t',col.names=F,row.names = F,quote=F,append = append)
+
+      binTabEval <- rbind(binTabEval[! bin_id %in% affected_bins],
+                          score_bins(bin_tab_scg = binTabScg[ bin_id %in% paste(gsub('_sub$','',affected_bins),'sub',sep='_')],
+                                   bin_tab_contig = binTabContig[ bin_id %in% paste(gsub('_sub$','',affected_bins),'sub',sep='_')],
+                                   b = duplicate_penalty,
+                                   c = megabin_penalty)) %>%
+      .[ order(score,contigN50,binSize,decreasing = T)]
       
       if(nrow(binTabEval) == 0){
          max_score <- -Inf
@@ -234,12 +241,13 @@ calc_bin_score <- function(b,c,protein_set_size,uniqueSCG,duplicatedSCG,sumSCG,a
 
 
 score_bins <- function(bin_tab_scg,bin_tab_contig,b=.6,c=.5){
+  
    bin_tab_scg_eval <- bin_tab_scg[,.(uniqueSCG=length(unique(protein_name)),
                                       duplicatedSCG=calc_duplicates(protein_name),
                                       sumSCG=.N),by=c('bin_id','protein_set','binner_name','protein_set_size')] %>% 
       .[,additionalSCG:= (sumSCG - uniqueSCG)] %>% 
       setkey(bin_id,binner_name)
-   
+    
    bin_tab_contig_eval <- bin_tab_contig[,.(binSize=as.numeric(calc_bins_size(contig_id,contig_length)),
                                             contigN50=as.numeric(calc_N50(contig_id,contig_length)),
                                             nContig=as.numeric(.N)),by=c('bin_id','binner_name')] %>% 
@@ -465,8 +473,6 @@ system(paste0('bash ', scriptDir,'/src/contig_length.sh ',
               arguments$contigs,' ',
               arguments$outputbasename,'.seqlength'))
 
-# write.log('SKIPPING CONTIG LENGTH CALC!!!',filename = logFile,append = T,write_to_file = T,type = 'warning')
-
 contigTab <- fread(paste0(arguments$outputbasename,'.seqlength'),
                    sep='\t',
                    header=F,
@@ -642,6 +648,7 @@ cherry_pick(binTab=binTab,
             score_threshold=as.numeric(arguments$score_threshold),
             duplicate_penalty=as.numeric(arguments$duplicate_penalty),
             megabin_penalty=as.numeric(arguments$megabin_penalty),
+            max_iter_post_threshold=as.numeric(arguments$max_iter_post_threshold),
             write_unbinned=arguments$write_unbinned,
             write_bin_evals=arguments$write_bin_evals,
             logFile=logFile)
