@@ -29,7 +29,7 @@ doc <- "DAS Tool
 
 Usage:
   DAS_Tool [options] -i <contig2bin> -c <contigs_fasta> -o <outputbasename>
-  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--write_bin_evals] [--write_bins] [--write_unbinned] [--resume] [--debug]
+  DAS_Tool -i <contig2bin> -c <contigs_fasta> -o <outputbasename> [--labels=<labels>] [--proteins=<proteins_fasta>] [--threads=<threads>] [--search_engine=<search_engine>] [--score_threshold=<score_threshold>] [--dbDirectory=<dbDirectory> ] [--megabin_penalty=<megabin_penalty>] [--duplicate_penalty=<duplicate_penalty>] [--max_iter_post_threshold=<max_iter>] [--write_bin_evals] [--write_bins] [--write_unbinned] [--resume] [--debug]
   DAS_Tool [--version]
   DAS_Tool [--help]
 
@@ -49,7 +49,7 @@ Options:
    --duplicate_penalty=<duplicate_penalty>  Penalty for duplicate single copy genes per bin (weight b).
                                             Only change if you know what you are doing (0..3) [default: 0.6].
    --megabin_penalty=<megabin_penalty>      Penalty for megabins (weight c). Only change if you know what you are doing (0..3) [default: 0.5].
-   --max_iter_post_threshold                Maximum number of iterations after reaching score threshold [default: 10].
+   --max_iter_post_threshold=<max_iter>     Maximum number of iterations after reaching score threshold [default: 10].
    --dbDirectory=<dbDirectory>              Directory of single copy gene database [default: db].
    --resume                                 Use existing predicted single copy gene files from a previous run.
    --debug                                  Write debug information to log file.
