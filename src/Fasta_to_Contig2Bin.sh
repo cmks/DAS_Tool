@@ -2,12 +2,13 @@
 
 function display_help() {
     echo " "
-    echo "Fasta_to_Scaffolds2Bin: Converts genome bins in fasta format to scaffolds-to-bin table."
+    echo "Fasta_to_Contig2Bin: Converts genome bins in fasta format to scaffolds-to-bin table."
     echo " (DAS Tool helper script)"
     echo " "
     echo "Usage: Fasta_to_Scaffolds2Bin.sh -e fasta > my_scaffolds2bin.tsv"
     echo " "
     echo "   -e, --extension            Extension of fasta files. (default: fasta)"
+    echo "                              Gzipped files (<extension>.gz) are detected automatically."
     echo "   -i, --input_folder         Folder with bins in fasta format. (default: ./)"
     echo "   -h, --help                 Show this message."
     echo " "
@@ -37,10 +38,20 @@ while [ "$1" != "" ]; do
     shift
 done
 
-for i in $folder\/*.$extension
+
+shopt -s nullglob
+
+files=( "$folder"/*."$extension" )
+
+for i in "${files[@]}"
 do
-binname=$(echo $(basename $i) | sed "s/\\.$extension//g")
-grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g" 
+    binname=$(basename "$i")
+    binname=$(echo "$binname" | sed "s/\\.$extension//g")
+    
+    case "$i" in
+        *.gz )  grep_cmd="zgrep" ;;
+        * )     grep_cmd="grep" ;;
+    esac
+
+    "$grep_cmd" ">" "$i" | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g"
 done
-
-
