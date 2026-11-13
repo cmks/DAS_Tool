@@ -37,7 +37,7 @@ puts "finding SCG candidates..."
 input_blast_database = system "makeblastdb -in #{input_file} -dbtype prot"
 input_blast_out = File.join(output_dir,File.basename(input_file) + ".findSCG.b6")
 abort "makeblastdb did not work for #{input_file}, please check your input file" unless input_blast_database
-input_blast_ok = system "blastp -db #{input_file} -query #{db_name} -outfmt '6 qseqid sseqid pident length qlen slen evalue bitscore' -evalue 0.01 -out #{input_blast_out} -num_threads #{threads}"
+input_blast_ok = system "blastp -db #{input_file} -query #{db_name} -outfmt '6 qseqid sseqid pident length qlen slen evalue bitscore' -evalue 0.01 -out #{input_blast_out} -num_threads #{threads} -max_target_seqs 10000"
 system "rm #{input_file}.psq #{input_file}.pin #{input_file}.phr"
 abort "blast did not work, please check your input file." unless input_blast_ok
 
